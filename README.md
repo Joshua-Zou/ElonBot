@@ -1,2 +1,2 @@
 # ElonBot
-Collaborators: 501stjoshua@gmail.com    timoball91154@gmail.com
+Collaborators: @joahie (https://github.com/Joahie)    @timothy (https://github.com/Timothymei)
