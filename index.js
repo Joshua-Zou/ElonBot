@@ -15,7 +15,7 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "mongodb+srv://nsfw-bot:nsfw-bot.js~visco~girl@cluster0.gnmgu.mongodb.net";
+const uri = "Mongo-connection-string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
 client.login("__discord_client-Login");
