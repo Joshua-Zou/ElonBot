@@ -15,10 +15,10 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "Mongo-connection-string";
+const uri = "mongoDB client loginn too lazy to make a seperate config.js_file";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
-client.login("__discord_client-Login");
+client.login("Discord_client_login_too_lazy_to_make_a_seperate_config.js_file");
 
 var cooldowns = {}
 
@@ -93,7 +93,7 @@ if (!cooldowns[message.author.id]){
             message.channel.send("No money for you");
             return;
          }else{
-     message.channel.send("A random person on the street gave you "+(x+add)+" dogecoin");
+     message.channel.send("Your money laundering service produced you "+(x+add)+" dogecoin");
      }
         let previous = await checkStuff(mongoclient, message.author.id)
         await mongoclient.db("elonbot").collection(message.guild.id)
@@ -550,13 +550,13 @@ if (!cooldowns[message.author.id]){
         var minute = 60000;
         //Set cooldown
         cooldowns[message.author.id].trade = Date.now() + 60000; //Set a 1 hour cooldown
-
-    thenum = message.content.toLowerCase().match(/\d+/)[0] 
-       if (Number(thenum).toString().toLowerCase() === "nan"){
-         cooldowns[message.author.id].trade = 0;
-         return message.channel.send("I didn't detect a number in there! The correct syntax is: `el buystock **thing** **amount**`")
-
-       }
+        if (message.content.toLowerCase().match(/\d+/) === null){
+          cooldowns[message.author.id].trade = 0;
+          return message.channel.send("I didn't detect a number in there! The correct syntax is: `el trade **thing** **amount**`")
+ 
+        }
+    thenum = message.content.toLowerCase().match(/\d+/)[0]
+      
     var coin;
 
     if (message.content.toLowerCase().includes("doge")){
@@ -829,11 +829,11 @@ if (!cooldowns[message.author.id]){
             .setColor('#9098a6')
             .setTitle("Stocks")
             .addFields(
-              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + ':dogecoin: ' + Math.round(userStocks.tesla) + "="+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + ':dogecoin: ' + Math.round(userStocks.roblox) + "="+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + ':dogecoin: ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + ':dogecoin: ' + Math.round(userStocks.elonstock)+ "="+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + "<:elon:825390986984161330> GameStonks - " + ':dogecoin: ' + Math.round(userStocks.gameStonks) + "="+Math.round(gme*userStocks.gameStonks)+' Doge'}
+              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + "="+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + "="+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock)+ "="+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + "<:elon:825390986984161330> GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + "="+Math.round(gme*userStocks.gameStonks)+' Doge'}
             )
           message.channel.send(embed);
   }
-  if (message.content.toLowerCase() === prefix + 'stock' || message.content.toLowerCase() === prefix + 'stocks') {
+  if (message.content.toLowerCase() === prefix + 'stock' || message.content.toLowerCase() === prefix + 'stocks' || message.content.toLowerCase() === prefix+"stock list") {
     let dogeCoin = await CoinGeckoClient.coins.fetch("dogecoin");
     let priceOfDoge = dogeCoin.data.market_data.current_price.usd
 
@@ -1165,15 +1165,15 @@ quant = Number(quant)
 
     if (message.content.toLowerCase() === prefix + 'help fun') {
       let embed = new Discord.MessageEmbed()
-        .setColor('#9098a6')
-        .setTitle("Fun commands").addFields(
-          { name: 'Dogecoin/Money', value: "``balance``, ``launder``, ``sue``, ``give``" },
-          { name: 'Roles', value: "``work``, ``jobs``, ``hobbies``,``get hobby``, ``uber``, ``rent``" },
-          { name: 'Items', value: "``shop``, ``inventory items``, ``use``, ``gift``, ``buy item``, ``sell item``" },
-          { name: 'Stocks', value: "``stock list``, ``buy stock``, ``sell stock``, ``inventory stocks``" },
-          { name: 'Additional Information', value: "-For more information about each of these commands use " + prefix + "help " + "``command name``" + '\n' + "-Use el before each command" }
-        )
-      message.channel.send(embed);
+              .setColor('#9098a6')
+              .setTitle("Fun commands").addFields(
+                { name: 'Dogecoin/Money', value: "``balance``, ``launder``, ``sue``, ``give``" },
+                { name: 'Roles', value: "``work``, ``jobs``, ``hobbies``,``get hobby``, ``uber``, ``rent``" },
+                { name: 'Items', value: "``shop``, ``inventory items``, ``use``, ``gift``, ``buy item``, ``sell item``" },
+                { name: 'Stocks', value: "``stock list``, ``trade``, ``inventory stocks``" },
+                { name: 'Additional Information', value: "-For more information about each of these commands use " + prefix + "help " + "``command name``" + '\n' + "-Use el before each command" }
+              )
+            message.channel.send(embed);
     }
 
     if (message.content.toLowerCase() === prefix + 'help launder' || message.content.toLowerCase() === prefix + 'help la') {
@@ -1351,13 +1351,13 @@ quant = Number(quant)
 
     if (message.content.toLowerCase() === prefix + 'help trade') {
       let embed = new Discord.MessageEmbed()
-        .setColor('#9098a6')
-        .setTitle("trade information").addFields(
-          { name: 'Description', value: "Use this command to buy and tell stocks/currencies." },
-          { name: 'Usage', value: "``el trade [STOCK YOU'RE SELLING OR] [AMOUNT]``" },
-          { name: 'Aliases', value: "none" }
-        )
-      message.channel.send(embed);
+              .setColor('#9098a6')
+              .setTitle("trade information").addFields(
+                { name: 'Description', value: "Use this command to buy and tell stocks/currencies." },
+                { name: 'Usage', value: "``el trade [STOCK YOU'RE SELLING OR BUYING] [AMOUNT]``" },
+                { name: 'Aliases', value: "none" }
+              )
+            message.channel.send(embed);
     }
 
 
@@ -1618,10 +1618,12 @@ quant = Number(quant)
     if (cooldowns[message.author.id].rent < Date.now()){
       delete cooldowns[message.author.id].rent;
       let previousUser = await checkStuff(mongoclient, message.author.id)
-      if (previousUser.inventory.houses === 0) return message.channel.send("Ur currently homeless, so worry about getting a house first")
+      if (previousUser.inventory.houses === 0){ cooldowns[message.author.id].rent = 0; return message.channel.send("Ur currently homeless, so worry about getting a house first");}
       var minute = 60000;
       var hour = minute * 24;
       //Set cooldown
+      console.log("a;lsdkjf;alsdf;lasjdf")
+
       cooldowns[message.author.id].rent = Date.now() + 60000; //Set a 60 hour cooldown
       let x = Math.floor(Math.random() * 500);
       let elon = await checkStuff(mongoclient,message.author.id)
@@ -1760,9 +1762,16 @@ quant = Number(quant)
     });
   }
   }
-  if (message.content.toLowerCase().includes(prefix+"gift")){
+  if (message.content.toLowerCase().includes(prefix+"gift")||message.content.toLowerCase().includes(prefix+"give")){
    if (!message.mentions.users.first()) return message.channel.send("You have to mention someone to give your stuff to!")
+   var p = message.content.toLowerCase().indexOf(">");
+    var str1 = message.content.toLowerCase().slice(p)
+    let thenum11 = str1.match(/\d+/);
+   if (thenum11 === null){
+    cooldowns[message.author.id].trade = 0;
+    return message.channel.send("I didn't detect a number in there! The correct syntax is: `el give **@someone** **thing** **amount**`")
 
+  }
     var things = "none";
     var catagory = "none"
     if (message.content.toLowerCase().includes("doge")){ things = "doge"; catagory = "currency";}
