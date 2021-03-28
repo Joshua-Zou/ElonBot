@@ -15,10 +15,10 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "mongoDB client loginn too lazy to make a seperate config.js_file";
+const uri = "mongodb client login";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
-client.login("Discord_client_login_too_lazy_to_make_a_seperate_config.js_file");
+client.login("discord client login");
 
 var cooldowns = {}
 
@@ -42,7 +42,6 @@ client.on("message", message => {
 
   async function main(){
   try {
-    //var everything = await checkStuff(mongoclient, "current");
 
     if (err) console.log(err); 
     // the reason we didn't add another key that was something like "serverId" was because this way, people can't spam with 100 different servers.
@@ -182,15 +181,16 @@ if (!cooldowns[message.author.id]){
         var minute = 60000;
         //Set cooldown
         cooldowns[message.author.id].jobs = Date.now() + 7200000; //Set a 2 hour cooldown
-    let output = new Discord.MessageEmbed()
-    .setTitle("List of currently available jobs")
-    .setColor("#9098a6")
-    .addFields(
-        {name: "SpaceX jobs",  value: " 1. coder (1000 Doge)\n2. accountant (600 Doge)\n3. Flight Computer (10k doge-half chance of dying)" },
-        {name: "Tesla jobs",       value: "4. engineer (950 Doge)\n5. accountant (650 Doge)\n6. Test driver (8k doge-quarter chance of dying)"},
-        {name: "Miscelenous", value: "7. Babysiting X Æ A-XII (850 Doge)"}
-    )
-    message.channel.send(output)
+        let output = new Discord.MessageEmbed()
+        .setTitle("Choose a Job")
+        .setColor("#9098a6")
+        .addFields(
+          { name: "SpaceX jobs", value: "1. Coder - <:dogecoin:825188367636627456> 1,000\n2. Accountant - <:dogecoin:825188367636627456> 600\n3. Flight Computer - <:dogecoin:825188367636627456> 10,000 ||Half chance of dying||" },
+          { name: "Tesla Jobs", value: "4. Engineer - <:dogecoin:825188367636627456> 950\n5. Accountant - <:dogecoin:825188367636627456> 650\n6. Test Driver - <:dogecoin:825188367636627456> 8,000 ||Quarter chance of dying||" },
+          { name: "Miscelanious", value: "7. Babysiting X Æ A-XII - <:dogecoin:825188367636627456> 850" },
+          { name: "Additional Info", value: "-To choose a job send the message corresponding to it (or type cancel to cancel the operation)" },
+        )
+      message.channel.send(output)
     //let x = await selOption();
     for (var x = 0; x<5; x++){
       if (x === 3){
@@ -199,6 +199,7 @@ if (!cooldowns[message.author.id]){
       }
     let option = await selOption();
     if (option === "cancel"){
+      cooldowns[message.author.id].jobs = 0;
       message.channel.send("Canceled.");
       return;
     }
@@ -251,7 +252,7 @@ if (!cooldowns[message.author.id]){
         let jobNum = person.job;
         if (jobNum === 1){
           var code = ['if (user.cookies.accept) cookies.record() else cookies.record()', 'python sucks', 'return halp;', 'c++ is king', 'visual studios', 'bugs suck'];
-          let x = Math.floor(Math.random() * 7);
+          let x = Math.floor(Math.random() * 6);
           
            message.channel.send("Quick! Type the following words in the chat: \n`"+code[x]+"`");
            let response = await selOption();
@@ -543,7 +544,7 @@ if (!cooldowns[message.author.id]){
         }
     }else return message.channel.send("To get work again, you have to wait: "+ Math.round((cooldowns[message.author.id].work-Date.now())/60000) +" minutes before you can use this command again")
   }
-  if (message.content.toLowerCase().startsWith(prefix+"buystock")||message.content.toLowerCase().startsWith(prefix+"buys")||message.content.toLowerCase().startsWith("buy stock")|| message.content.toLowerCase() === prefix+"trade"){
+  if (message.content.toLowerCase().startsWith(prefix+"trade")){
     if (cooldowns[message.author.id].trade < Date.now()){
       delete cooldowns[message.author.id].trade;
          
@@ -591,7 +592,7 @@ if (!cooldowns[message.author.id]){
       coin = "game"
     }
       let options = new Discord.MessageEmbed()
-      .setTitle("List of currently available jobs")
+      .setTitle("Menu")
       .setColor("#9098a6")
       .addFields(
           {name: "Currencies",  value: " 1. Dogecoin\n2. USD \n3. BTC\n4. ETH" },
@@ -688,7 +689,8 @@ if (!cooldowns[message.author.id]){
       console.log(totalAmount); // take away this num
       console.log(Number(thenum)) // add this num
 
-
+      totalAmount = Number(totalAmount);
+      thenum = Number(thenum)
       //console.log(x) //deduct the currency X
 
       //taking away stuff
@@ -767,7 +769,7 @@ if (!cooldowns[message.author.id]){
      }else if (message.content.toLowerCase().includes("game")||message.content.toLowerCase().includes("gme")){
       let previous = await checkStuff(mongoclient, message.author.id)
       await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox+thenum, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks+thenum, elonstock: previous.stocks.elonstock}}})
      }
      message.channel.send("Succesful transaction!")
     }
@@ -800,7 +802,7 @@ if (!cooldowns[message.author.id]){
             if (owned.teslas !== 0) embed.addFields({name: ':blue_car: Teslas - ' + '<:dogecoin:825188367636627456> ' + owned.teslas, value: "="+30000*owned.teslas+" Doge"})
             if (owned.rockets !== 0) embed.addFields({name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + owned.rockets, value: "="+30000*owned.rockets+" Doge"})
             if (owned.flamthrowers !== 0) embed.addFields({ name: ':fire: Flamethrower - ' + '<:dogecoin:825188367636627456> ' + owned.flamthrowers, value: "="+10000*owned.flamthrowers+" Doge"})
-            if (owned.nft !== 0) embed.addFields({name: ':coin: NFT - ' + ':dogecoin: ' + owned.nft, value: 100000*owned.nft+ "Doge"});
+            if (owned.nft !== 0) embed.addFields({name: ':coin: NFT - ' + '<:dogecoin:825188367636627456> ' + owned.nft, value: 100000*owned.nft+ "Doge"});
             if (owned.gold !== 0) embed.addFields({ name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + owned.gold, value: "="+10000*owned.gold+ "Doge"});
             if (owned.houses !== 0) embed.addFields({ name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + owned.houses, value: "="+30000*owned.houses+ " Doge"});
             if (owned.twitter !== 0) embed.addFields({ name: ' <:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + owned.twitter+"k", value: "="+20000*owned.twitter +" Doge"});
@@ -829,7 +831,7 @@ if (!cooldowns[message.author.id]){
             .setColor('#9098a6')
             .setTitle("Stocks")
             .addFields(
-              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + "="+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + "="+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock)+ "="+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + "<:elon:825390986984161330> GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + "="+Math.round(gme*userStocks.gameStonks)+' Doge'}
+              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + "="+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + "="+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock)+ "="+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + ":video_game:  GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + "="+Math.round(gme*userStocks.gameStonks)+' Doge'}
             )
           message.channel.send(embed);
   }
@@ -866,21 +868,21 @@ if (!cooldowns[message.author.id]){
   if (message.content.toLowerCase() === prefix + 'shop' || message.content.toLowerCase() === prefix + 'store') {
 
     let embed = new Discord.MessageEmbed()
-      .setColor('#9098a6')
-      .setTitle("The store").addFields(
+            .setColor('#9098a6')
+            .setTitle(message.member.user.tag + "'s" + " inventory").addFields(
 
-        { name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + falcon9price, value: "Board the Falcon 9 for a chance to earn Doge...or die trying" },
+              { name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + falcon9price, value: "Board the Falcon 9 for a chance to earn Doge...or die trying" },
 
-        { name: ':fire: Flamethrower - ' + '<:dogecoin:825188367636627456> ' + flamethrowerprice, value: "Use the flamethrower to *try* and kill someone, but beware; you might die too" },
-        { name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + goldprice, value: "Money can't buy you happiness, but it can save your life" }, { name: '<:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + twitterprice, value: "Get a pay raise; just don't get cancelled by your followers" },
-        { name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + houseprice, value: "Rent out your house to Elon so he can have parties in it" },
-        { name: ':blue_car: Tesla - ' + '<:dogecoin:825188367636627456> ' + teslaprice, value: "Use you Tesla as an Uber driver and earn some extra Dogecoin" },
-        { name: ':coin: NFT - ' + '<:dogecoin:825188367636627456> ' + nftprice, value: "A useless collectible to show off to your friends if you're rich (just like a real NFT)" }, { name: 'Additional Info', value: "-To find out more about each item say ``el help [ITEM NAME]``" + '\n' + "-Say ``el use [ITEM NAME]`` to active the item" }
+              { name: ':fire: Flamethrower - ' + '<:dogecoin:825188367636627456> ' + flamethrowerprice, value: "Use the flamethrower to *try* and kill someone, but beware; you might die too" },
+              { name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + goldprice, value: "Money can't buy you happiness, but it can save your life" }, { name: '<:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + twitterprice, value: "Get a pay raise; just don't get cancelled by your followers" },
+              { name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + houseprice, value: "Rent out your house to Elon so he can have parties in it" },
+              { name: ':blue_car: Tesla - ' + '<:dogecoin:825188367636627456> ' + teslaprice, value: "Use you Tesla as an Uber driver and earn some extra Dogecoin" },
+              { name: ':coin: NFT - ' + '<:dogecoin:825188367636627456> ' + nftprice, value: "A useless collectible to show off to your friends if you're rich (just like a real NFT)" }, { name: 'Additional Info', value: "-To find out more about each item say ``el help [ITEM NAME]``" + '\n' + "-Say ``el buy [ITEM NAME] [AMOUNT]`` to buy the item" + '\n' + "-Say ``el use [ITEM NAME]`` to active the item" }
 
-      )
-    message.channel.send(embed);
+            )
+          message.channel.send(embed);
   }
-  if (message.content.toLowerCase().startsWith(prefix+"buy item")){
+  if (message.content.toLowerCase().startsWith(prefix+"buy item")||message.content.toLowerCase().includes(prefix+"buy")){
     var prices = {
       rocket: 30000,
       flamthrowers: 10000,
@@ -909,7 +911,7 @@ quant = Number(quant)
     let user = await checkStuff(mongoclient, message.author.id);
     let response  = await selOption();
     if (response.toLowerCase() !== "yes") return message.channel.send("Ok! Canceled")
-    if (user.currency.doge < prices[item]*quant) return message.channel.send("Tough luck! You don't have enough doge! To buy in a different currency, first exchamnge to doge.")
+    if (user.currency.doge < prices[item]*quant) return message.channel.send("Tough luck! You don't have enough doge! To buy in a different currency, first exchange to doge.")
 
     let previous = await checkStuff(mongoclient, message.author.id)
     await mongoclient.db("elonbot").collection(message.guild.id)
@@ -950,7 +952,7 @@ quant = Number(quant)
       });
     } 
   }
-  if (message.content.toLowerCase().startsWith(prefix+"sell item")){
+  if (message.content.toLowerCase().startsWith(prefix+"sell item")||message.content.toLowerCase().includes(prefix+"sell")){
     var prices = {
       rocket: 2400,
       flamthrowers: 8000,
@@ -1163,17 +1165,14 @@ quant = Number(quant)
       message.channel.send(embed);
     }
 
-    if (message.content.toLowerCase() === prefix + 'help fun') {
+    if (message.content.toLowerCase() === prefix + 'help') {
       let embed = new Discord.MessageEmbed()
-              .setColor('#9098a6')
-              .setTitle("Fun commands").addFields(
-                { name: 'Dogecoin/Money', value: "``balance``, ``launder``, ``sue``, ``give``" },
-                { name: 'Roles', value: "``work``, ``jobs``, ``hobbies``,``get hobby``, ``uber``, ``rent``" },
-                { name: 'Items', value: "``shop``, ``inventory items``, ``use``, ``gift``, ``buy item``, ``sell item``" },
-                { name: 'Stocks', value: "``stock list``, ``trade``, ``inventory stocks``" },
-                { name: 'Additional Information', value: "-For more information about each of these commands use " + prefix + "help " + "``command name``" + '\n' + "-Use el before each command" }
-              )
-            message.channel.send(embed);
+        .setColor('#9098a6')
+        .setTitle("Bot commands").addFields(
+          { name: prefix + "help fun", value: 'All the fun commands for the bot', inline: true },
+          { name: prefix + "help info", value: 'Get started, bot website, community server, etc.', inline: true }
+        )
+      message.channel.send(embed);
     }
 
     if (message.content.toLowerCase() === prefix + 'help launder' || message.content.toLowerCase() === prefix + 'help la') {
@@ -1207,7 +1206,7 @@ quant = Number(quant)
       message.channel.send(embed);
     }
 
-              if (message.content.toLowerCase() === prefix + 'help lawyer') {
+    if (message.content.toLowerCase() === prefix + 'help lawyer') {
       let embed = new Discord.MessageEmbed()
         .setColor('#9098a6')
         .setTitle("lawyer information").addFields(
@@ -1217,7 +1216,7 @@ quant = Number(quant)
       message.channel.send(embed);
     }
 
-              if (message.content.toLowerCase() === prefix + 'help hacker'||message.content.toLowerCase() === prefix + 'help hack') {
+    if (message.content.toLowerCase() === prefix + 'help hacker'||message.content.toLowerCase() === prefix + 'help hack') {
       let embed = new Discord.MessageEmbed()
         .setColor('#9098a6')
         .setTitle("hacker information").addFields(
@@ -1338,12 +1337,12 @@ quant = Number(quant)
       message.channel.send(embed);
     }
 
-    if (message.content.toLowerCase() === prefix + 'help buy item' || message.content.toLowerCase() === prefix + 'help buy items') {
+    if (message.content.toLowerCase() === prefix + 'help buy') {
       let embed = new Discord.MessageEmbed()
         .setColor('#9098a6')
-        .setTitle("buy item information").addFields(
+        .setTitle("buy information").addFields(
           { name: 'Description', value: "Use this command to buy items from the shop." },
-          { name: 'Usage', value: "``el buy item [ITEM NAME] [AMOUNT]``" },
+          { name: 'Usage', value: "``el buy [ITEM NAME] [AMOUNT]``" },
           { name: 'Aliases', value: "none" }
         )
       message.channel.send(embed);
@@ -1360,7 +1359,18 @@ quant = Number(quant)
             message.channel.send(embed);
     }
 
-
+    if (message.content.toLowerCase() === prefix + 'help fun') {
+      let embed = new Discord.MessageEmbed()
+        .setColor('#9098a6')
+        .setTitle("Fun commands").addFields(
+          { name: 'Dogecoin/Money', value: "``balance``, ``launder``, ``sue``, ``give``" },
+          { name: 'Roles', value: "``work``, ``jobs``, ``hobbies``,``get hobby``, ``uber``, ``rent``" },
+          { name: 'Items', value: "``shop``, ``inventory items``, ``use``, ``gift``, ``buy``, ``sell``" },
+          { name: 'Stocks', value: "``stock list``, ``trade``, ``inventory stocks``" },
+          { name: 'Additional Information', value: "-For more information about each of these commands use " + prefix + "help " + "``command name``" + '\n' + "-Use el before each command" }
+        )
+      message.channel.send(embed);
+    }
     if (message.content.toLowerCase() === prefix + 'help gift') {
       let embed = new Discord.MessageEmbed()
         .setColor('#9098a6')
@@ -1382,16 +1392,16 @@ quant = Number(quant)
       message.channel.send(embed);
     }
 
-    if (message.content.toLowerCase() === prefix + 'help sell item' || message.content.toLowerCase() === prefix + 'help sell items') {
-      let embed = new Discord.MessageEmbed()
-        .setColor('#9098a6')
-        .setTitle("sell items information").addFields(
-          { name: 'Description', value: "Use this command to sell items from the shop. You'll be refunded with 80% of what the item is worth." },
-          { name: 'Usage', value: "``el sell [ITEM NAME] [AMOUNT]``" },
-          { name: 'Aliases', value: "none" }
-        )
-      message.channel.send(embed);
-    }
+    if (message.content.toLowerCase() === prefix + 'help sell item' ||message.content.toLowerCase().includes(prefix+'sell')) {
+            let embed = new Discord.MessageEmbed()
+              .setColor('#9098a6')
+              .setTitle("sell items information").addFields(
+                { name: 'Description', value: "Use this command to sell items from the shop. You'll be refunded with 80% of what the item is worth." },
+                { name: 'Usage', value: "``el sell [ITEM NAME] [AMOUNT]``" },
+                { name: 'Aliases', value: "none" }
+              )
+            message.channel.send(embed);
+  }
 
     if (message.content.toLowerCase() === prefix + 'help sell stock' || message.content.toLowerCase() === prefix + 'help sell stocks') {
       let embed = new Discord.MessageEmbed()
@@ -1426,20 +1436,12 @@ quant = Number(quant)
         )
       message.channel.send(embed);
     }
-    if (message.content.toLowerCase() === prefix + 'help') {
-      let embed = new Discord.MessageEmbed()
-        .setColor('#9098a6')
-        .setTitle("Bot commands").addFields(
-          { name: prefix + "help fun", value: 'All the fun commands for the bot', inline: true },
-          { name: prefix + "help info", value: 'Bot website, community server, GitHub repository, etc.', inline: true }
-        )
-      message.channel.send(embed);
-    }
     if (message.content.toLowerCase() === prefix + 'help info') {
       let embed = new Discord.MessageEmbed()
         .setColor('#9098a6')
         .setTitle("Bot Information").addFields(
-          { name: "Website", value: "[placeholder](placeholder)", inline: true },
+          {name: 'Get started', value: "Start earning money using the ``el launder`` command. Once you have enough money you can buy items from the ``el shop`` & ``el stock list``, get a job from ``el jobs``, and get powerups from the list of ``el hobbies``. To find out more about a command, item, stock, jobs, or hobby, just use the ``el help [COMMAND/ITEM/ETC. NAME]`` command (if you're looking for info on a stock use ``el help stock [STOCK NAME]``."},
+          { name: "Website", value: "[Click here](https://www.elon-bot.ml/)", inline: true },
           { name: "Community Server", value: "[Click here](https://discord.gg/jerYNWApvm)", inline: true },
           { name: "Github Repository", value: "[Click here](https://github.com/Joshua-Zou/ElonBot)", inline: true },
           { name: "Invitation Link", value: "[Click here](https://discord.com/api/oauth2/authorize?client_id=824730559779045417&permissions=8&scope=bot)", inline: true }
@@ -1508,6 +1510,7 @@ quant = Number(quant)
         //Set cooldown
         cooldowns[message.author.id].flame = Date.now() + 60000; //Set a 60 hour cooldown
       if (!message.mentions.users.first()){
+        cooldowns[message.author.id].flame = 0;
         return message.channel.send("You need to mention someone to kill!")
     }else{
       message.channel.send("Use the Boring Company Flamethrower to attack someone. There's a 55% chance your target will die, and there's a 45% chance you will die. Are you sure you want to use this? (Yes/No)")
@@ -1585,7 +1588,7 @@ quant = Number(quant)
     if (cooldowns[message.author.id].uber < Date.now()){
       delete cooldowns[message.author.id].uber;
       let previousUser = await checkStuff(mongoclient, message.author.id)
-      if (previousUser.inventory.teslas === 0) return message.channel.send("You don't even have a freakin car to drive you idiot.")
+      if (previousUser.inventory.teslas === 0){ cooldowns[message.author.id].uber = 0; return message.channel.send("You don't even have a freakin car to drive you idiot.")}
       var minute = 60000;
       var hour = minute * 24;
       //Set cooldown
@@ -1704,11 +1707,13 @@ quant = Number(quant)
       cooldowns[message.author.id].hobby = Date.now() + 180000; //Set a 60 sec cooldown
 
       let embed = new Discord.MessageEmbed()
-      .setColor('#9098a6')
-      .setTitle("Get a hobby").addFields(
-        {name: "Choose the hobby you want by typing the number corresponding to it. If you don't want to do anything, type ``cancel``.", value: '1. Lawyer - 50%' + '\n' + '2. Hacker - 33%' + '\n' + "3. Elon's Child - 1%"}
-      )
-    message.channel.send(embed);
+            .setColor('#9098a6')
+            .setTitle("Hobbies").addFields(
+              { name: ':briefcase: 1. Lawyer - 50%', value: 'Helps you sue people' },
+              { name: ':computer: 2. Hacker - 33%', value: 'Gives you more money from laundering' },
+              { name: "<:elon:825390986984161330> 3. Elon's Child - 1%", value: 'Gives you 200 Dogecoins for every transaction' },
+              { name: "Additional Info", value: '-Each % is the chance of you getting the hobby when you choose it \n' + '-Get a hobby using ``el get hobby``' +'\n' + '-Find out more about the hobbies using ``el help [HOBBY NAME]``' })
+          message.channel.send(embed);
 
   let response = await selOption();
   if (response.toLowerCase().includes("can")) return message.channel.send("Ok, canceled!")
@@ -1777,6 +1782,7 @@ quant = Number(quant)
     if (message.content.toLowerCase().includes("doge")){ things = "doge"; catagory = "currency";}
     else if (message.content.toLowerCase().includes("usd")){ things = "usd"; catagory = "currency";}
     else if (message.content.toLowerCase().includes("btc")||message.content.toLowerCase().includes("bitcoin")){ things = "btc"; catagory = "currency";}
+    else if (message.content.toLowerCase().includes("flame")){ things = "flamthrowers"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("eth")){ things = "eth"; catagory = "currency";}
     //
     else if (message.content.toLowerCase().includes("tesla")){ things = "tesla"; catagory = "stocks";}
@@ -1787,7 +1793,6 @@ quant = Number(quant)
     else if (message.content.toLowerCase().includes("elon")){ things = "elonstock"; catagory = "stocks";}
     //
     else if (message.content.toLowerCase().includes("rocket")||message.content.toLowerCase().includes("falcon")){ things = "rockets"; catagory = "inventory";}
-    else if (message.content.toLowerCase().includes("flame")){ things = "flamthrowers"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("tesla")||message.content.toLowerCase().includes("car")){ things = "teslas"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("gold")){ things = "gold"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("house")){ things = "houses"; catagory = "inventory";}
@@ -1895,8 +1900,17 @@ else if (things === "tesla"){
   await mongoclient.db("elonbot").collection(message.guild.id)
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock+thenum}}})
 }
+if (things === "flamthrowers") things = "flamethrower"
 message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user `"+ message.mentions.users.first().tag+"`")
   }
+
+
+
+
+
+
+
+
 
 
 
