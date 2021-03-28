@@ -18,7 +18,7 @@ const {MongoClient} = require('mongodb')
 const uri = "mongodb+srv://nsfw-bot:nsfw-bot.js~visco~girl@cluster0.gnmgu.mongodb.net";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
-client.login("ODI0NzMwNTU5Nzc5MDQ1NDE3.YFzoMA.mNFeC9759cdj4uBjBkzE6tSR3CU");
+client.login("__discord_client-Login");
 
 var cooldowns = {}
 
