@@ -2041,7 +2041,7 @@ while(true){
   fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
     method: 'POST',
     body: JSON.stringify({"guilds": x}),
-    headers: { 'Content-Type': 'application/json', "Authorization":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0IjoxLCJpZCI6IjgyNDczMDU1OTc3OTA0NTQxNyIsImlhdCI6MTYxNzIyNzk2NH0.f8Vba6p3rYYRAhGM_Bkr9NY787Vyo6si3e8D7H7twt4" }
+    headers: { 'Content-Type': 'application/json', "Authorization":"thing here" }
 })
 await sleep(100000)
 
