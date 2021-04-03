@@ -1,7 +1,9 @@
 
+// start of actual bot
 const CoinGecko = require('coingecko-api');
 const CoinGeckoClient = new CoinGecko();
 var yahooStockPrices = require("yahoo-stock-prices")
+const fetch = require("node-fetch")
 var falcon9price = 30000
 var flamethrowerprice = 10000
 var nftprice = 100000
@@ -15,10 +17,10 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "mongodb client login";
+const uri = "mongodb connection string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
-client.login("discord client login");
+client.login("Discord secret bot key");
 
 var cooldowns = {}
 
@@ -58,22 +60,24 @@ if (!cooldowns[message.author.id]){
         hobby: 0
     }
 }
+let dbCooldowns = await checkCooldown(mongoclient, "all");
+if (!dbCooldowns[message.author.id]){
+await updateCooldowns(mongoclient, "all", {
+  [message.author.id]:{
+    work: 0,
+    jobs: 0,
+    flame: 0,
+    hobby: 0
+  }
+})
+}
 
   const db = mongoclient.db("elonbot");
   if (message){
-
-    let serverid = message.guild.id;
-    await db.listCollections({name: serverid})
-    .next(async function(err, collinfo){
-      if (!collinfo){
-        await createCollection(serverid);
-      }
-    })
- 
     signup(mongoclient);
 
   }
-  if (message.content.startsWith(prefix+"launder")|| message.content.toLowerCase() === prefix+"la"){
+  if (message.content.toLowerCase().startsWith(prefix+"launder")|| message.content.toLowerCase() === prefix+"la"){
     if (cooldowns[message.author.id].launder < Date.now()){
       var add = 0;
       let user = await checkStuff(mongoclient, message.author.id);
@@ -94,18 +98,26 @@ if (!cooldowns[message.author.id]){
          }else{
      message.channel.send("Your money laundering service produced you "+(x+add)+" dogecoin");
      }
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+(x+add)), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+     await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"currency.doge":(x+add)}})
 
         }
 
     else return message.channel.send("Spams not cool. Especailly when dealing with money. You still have to wait: "+ Math.round((cooldowns[message.author.id].launder-Date.now())/1000) +" seconds before you can use this command again")
   }
-  if (message.content.startsWith(prefix+"sue")|| message.content.startsWith(prefix+"su")){
+  if (message.content.toLowerCase().startsWith(prefix+"sue")|| message.content.startsWith(prefix+"su")){
     if (cooldowns[message.author.id].sue < Date.now()){
+      if (!message.mentions.users.first()){
+        cooldowns[message.author.id].sue = 0;
+        return message.channel.send("You need to mention someone to sue!")
+    }
+    if (message.mentions.users.first().id === message.author.id){
+      cooldowns[message.author.id].sue = 0;
+      return message.channel.send("You really want to sue yourself? Wow I always knew you were stupid, just not *this* stupid.")
+    }
       let userData = await checkStuff(mongoclient, message.author.id);
       let defendant = await checkStuff(mongoclient, message.mentions.users.first().id)
+      if (!defendant){ cooldowns[message.author.id].sue = 0; return message.channel.send("That user isn't alive yet. Go make them type *any* message and then I will create something *just* for them")}
       var threshold = 400;
       if (userData.hobby === "lawyer"&&defendant.hobby === "lawyer"){
         threshold = 400;
@@ -114,38 +126,34 @@ if (!cooldowns[message.author.id]){
       }else if (defendant.hobby === "laywer"){
         threshold = 200;
       }
-        if (!message.mentions.users.first()){
-            return message.channel.send("You need to mention someone to sue!")
-        }
+        
         delete cooldowns[message.author.id].sue;
          
         var minute = 60000;
         //Set cooldown
-        cooldowns[message.author.id].sue = Date.now() + 0; //Set a 60 sec cooldown
+        cooldowns[message.author.id].sue = Date.now() + 60000; //Set a 60 sec cooldown
 
         let x = Math.floor(Math.random() * 1000);
         if (x<threshold){
             message.channel.send("You lost the case, and had to pay the defendent "+message.mentions.users.first().tag+ " `300` doge coin for the time that they wasted with you");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge-300), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"currency.doge":-300}})
             let previousPerson = await checkStuff(mongoclient, message.mentions.users.first().id)
             if (!previousPerson) return message.channel.send("The person you tried to sue doesn't have their acount set up yet! To make this work, spam ping them and make them type a message")
        
-            await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (previousPerson.currency.doge+300), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.mentions.users.first().id}, { $inc: {"currency.doge":-300}})
                 
             return;
          }else{
 
-     let previous = await checkStuff(mongoclient, message.author.id)
-     await mongoclient.db("elonbot").collection(message.guild.id)
-         .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+x), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+          await mongoclient.db("elonbot").collection("everything")
+          .updateOne({name: message.author.id}, { $inc: {"currency.doge":x}})
      let previousPerson = await checkStuff(mongoclient, message.mentions.users.first().id)
      if (!previousPerson) return message.channel.send("The person you tried to sue doesn't have their acount set up yet! To make this work, spam ping them and make them type a message")
 
-     await mongoclient.db("elonbot").collection(message.guild.id)
-         .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (previousPerson.currency.doge-x), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+     await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.mentions.users.first().id}, { $inc: {"currency.doge":-x}})
          
      message.channel.send("Nice! You won the case and got paid `"+x+ "`doge coin!");
 
@@ -154,33 +162,38 @@ if (!cooldowns[message.author.id]){
 
     else return message.channel.send("Spams not cool. Especailly when dealing with money. You still have to wait: "+ Math.round((cooldowns[message.author.id].sue-Date.now())/1000) +" seconds before you can use this command again")
   }
-  if (message.content.toLowerCase() === prefix+"bal"|| message.content.toLowerCase() === prefix+"balance"){
-    let balance = await checkStuff(mongoclient, message.author.id);
-
-    let btcprice = await CoinGeckoClient.coins.fetch("bitcoin");
-    let ethprice = await CoinGeckoClient.coins.fetch("ethereum");
-    let dogeprice = await CoinGeckoClient.coins.fetch("dogecoin");
-
+  if (message.content.toLowerCase().startsWith(prefix+"bal")){
+    var balance;
+    var tag;
+    if (message.mentions.users.first()){ balance = await checkStuff(mongoclient, message.mentions.users.first().id); tag = message.mentions.users.first().tag}
+    else {balance = await checkStuff(mongoclient, message.author.id); tag = message.author.tag}
+    if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
+let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let dogePrice = Number(prices.dogecoin.usd)
+let ethPrice = Number(prices.ethereum.usd)
+let btcPrice = Number(prices.bitcoin.usd)
 
     let output = new Discord.MessageEmbed()
-    .setTitle(message.author.tag+"'s current wallet")
+    .setTitle(tag+"'s current wallet")
     .setColor("#9098a6")
     .addFields(
-        {name: balance.currency.doge.toString()+ " Doge coin",  value: "= "+Math.round(dogeprice.data.market_data.current_price.usd * balance.currency.doge)+" usd" },
+        {name: balance.currency.doge.toString()+ " Doge coin",  value: "= "+Math.round(dogePrice * balance.currency.doge)+" usd" },
         {name: balance.currency.usd.toString()+ " USD",       value: "= "+Math.round(balance.currency.usd)+ " usd"},
-        {name: balance.currency.btc.toString()+" BTC",   value: "= "+Math.round(btcprice.data.market_data.current_price.usd * balance.currency.btc)+" usd" },
-        {name: balance.currency.eth.toString()+" ETH",  value: "= "+Math.round(ethprice.data.market_data.current_price.usd * balance.currency.eth)+" usd" },
-        {name: "Total in USD",  value:  Math.round((Number(btcprice.data.market_data.current_price.usd) * Number(balance.currency.btc))+(Number(btcprice.data.market_data.current_price.usd) * Number(balance.currency.btc))+(Number(dogeprice.data.market_data.current_price.usd) * Number(balance.currency.doge))+Number(balance.currency.usd))},
+        {name: balance.currency.btc.toString()+" BTC",   value: "= "+Math.round(btcPrice * balance.currency.btc)+" usd" },
+        {name: balance.currency.eth.toString()+" ETH",  value: "= "+Math.round(ethPrice * balance.currency.eth)+" usd" },
+        {name: "Total in USD",  value:  Math.round((Number(ethPrice) * Number(balance.currency.eth))+(Number(btcPrice) * Number(balance.currency.btc))+(Number(dogePrice) * Number(balance.currency.doge))+Number(balance.currency.usd))},
     )
     message.channel.send(output)
   }
   if (message.content.toLowerCase().startsWith(prefix+"job")){
-    if (cooldowns[message.author.id].jobs < Date.now()){
-      delete cooldowns[message.author.id].jobs;
-         
+    if (dbCooldowns[message.author.id].jobs < Date.now()){
         var minute = 60000;
         //Set cooldown
-        cooldowns[message.author.id].jobs = Date.now() + 7200000; //Set a 2 hour cooldown
+        let path = message.author.id+".jobs"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:Date.now()+7200000}})
+
         let output = new Discord.MessageEmbed()
         .setTitle("Choose a Job")
         .setColor("#9098a6")
@@ -199,13 +212,14 @@ if (!cooldowns[message.author.id]){
       }
     let option = await selOption();
     if (option === "cancel"){
-      cooldowns[message.author.id].jobs = 0;
       message.channel.send("Canceled.");
       return;
     }
     if (Number(option)<1 || Number(option)>7){
       message.channel.send("That isn't an option, enter a valid number");
-      cooldowns[message.author.id].jobs = 0;
+      let path = message.author.id+".jobs"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
       return;
     }else{
       updateDocumentSet(mongoclient, message.author.id, {job: Number(option)})
@@ -220,7 +234,10 @@ if (!cooldowns[message.author.id]){
        }else if (option === "7") message.channel.send("You are now working for Elon as a baby siter, making 850 doge an hour");
        else{
         message.channel.send("That isn't an option, enter a valid number");
-        cooldowns[message.author.id].jobs = 0;
+        let path = message.author.id+".jobs"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+
         return;
        }
        break;
@@ -237,16 +254,19 @@ if (!cooldowns[message.author.id]){
         });
       });
     } 
-  }  else return message.channel.send("To get a new job, you have to wait: "+ Math.round((cooldowns[message.author.id].jobs-Date.now())/60000) +" minutes before you can use this command again")
+  }  else return message.channel.send("To get a new job, you have to wait: "+ Math.round((dbCooldowns[message.author.id].jobs-Date.now())/60000) +" minutes before you can use this command again")
 
   }
   if (message.content.toLowerCase().startsWith(prefix+"work")){
-    if (cooldowns[message.author.id].work < Date.now()){
-      delete cooldowns[message.author.id].work;
+    if (dbCooldowns[message.author.id].work < Date.now()){
          
         var minute = 60000;
         //Set cooldown
-        cooldowns[message.author.id].work = Date.now() + 3600000; //Set a 1 hour cooldown
+        let path = message.author.id+".work"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:Date.now() + 3600000}})
+
+        
         let person = await checkStuff(mongoclient, message.author.id);
         let boost = (person.inventory.twitter*0.05)+1
         let jobNum = person.job;
@@ -259,21 +279,21 @@ if (!cooldowns[message.author.id]){
            let elon = await checkStuff(mongoclient, message.author.id);
            if (elon.hobby === "elon"){
              message.channel.send("since your elon's child, you get an extra 200 doge!")
-             await mongoclient.db("elonbot").collection(message.guild.id)
+             await mongoclient.db("elonbot").collection("everything")
                .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
            }
            if (response.toLowerCase() === code[x]){
              let increase = 1000*boost
              message.channel.send("Great job! For that hour of work, you get "+increase+" Doge!");
-             let previous = await checkStuff(mongoclient, message.author.id)
-             await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+
+             await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
+
            }else{
              let increase = 322*boost
              message.channel.send("How did you mess up that simple of a task?! I'm only giving you "+increase+" doge for that hour of work. I'm expecting to not see this mistake happen ever again." );
-             let previous = await checkStuff(mongoclient, message.author.id)
-             await mongoclient.db("elonbot").collection(message.guild.id)
-               .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+             await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
            }
            function selOption(){
             return new Promise(resolve => {
@@ -293,21 +313,19 @@ if (!cooldowns[message.author.id]){
           let response = await selOption();
           if (elon.hobby === "elon"){
             message.channel.send("since your elon's child, you get an extra 200 doge!")
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
               .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
           }
           if (Number(response) === x*y){
             let increase = 600*boost
             message.channel.send("Great job! You get "+increase+" doge for that hour of work!");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }else{
             let increase = 100*boost
             message.channel.send("What the heck? How did you mess that up?! I'm only giving you "+increase+" doge for that hour of work");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+100), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }
           function selOption(){
             return new Promise(resolve => {
@@ -338,11 +356,11 @@ if (!cooldowns[message.author.id]){
             if (num>0){
               message.channel.send("At least you had a life saver (gold) You didn't die");
               previous = lifesaver;
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold-1, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.doge":-1}})
               return;
             }
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
                 .updateOne({name: message.author.id}, { $set: {
                   currency: {
                     usd: 0,
@@ -374,12 +392,11 @@ if (!cooldowns[message.author.id]){
               await message.channel.send("Mission Success! Our flight computer just got paid "+increasesmall+"k doge.");
               if (elon.hobby === "elon"){
                 message.channel.send("since your elon's child, you get an extra 200 doge!")
-                await mongoclient.db("elonbot").collection(message.guild.id)
-                  .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
+                await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":200}})
               }
-              let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+              await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
             }
         }else if (jobNum === 4){
           let elon = await checkStuff(mongoclient,message.author.id)
@@ -389,15 +406,14 @@ if (!cooldowns[message.author.id]){
           let response = await selOption();
           if (elon.hobby === "elon"){
             message.channel.send("since your elon's child, you get an extra 200 doge!")
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
               .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
           }
           if (response.toLowerCase() === phrases[x]){
             let increase = 950*boost;
             message.channel.send("great job! For that hour of work, you get "+increase+" Doge coins");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }else{
             let fire = Math.floor(Math.random() * 6);
             if (fire<3){
@@ -405,9 +421,8 @@ if (!cooldowns[message.author.id]){
             updateDocumentSet(mongoclient, message.author.id, {job: 100})
             }else{
               message.channel.send("Seriously, how did you mess *that* up? I'm only giving you 10 doge for that hour of work");
-              let previous = await checkStuff(mongoclient, message.author.id)
-                await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+10), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+              await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":10}})
             }
           }
           function selOption(){
@@ -428,21 +443,19 @@ if (!cooldowns[message.author.id]){
           let response = await selOption();
           if (elon.hobby === "elon"){
             message.channel.send("since your elon's child, you get an extra 200 doge!")
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
               .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
           }
           if (Number(response) === x*y){
             let increase = 650*boost
             message.channel.send("Great job! You get "+increase+" doge for that hour of work!");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }else{
             let increase = 100*boost
             message.channel.send("What the heck? How did you mess that up?! I'm only giving you "+increase+" doge for that hour of work");
-            let previous = await checkStuff(mongoclient, message.author.id)
-            await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }
           function selOption(){
             return new Promise(resolve => {
@@ -459,7 +472,7 @@ if (!cooldowns[message.author.id]){
           let x = Math.floor(Math.random() * 100);
           if (elon.hobby === "elon"){
             message.channel.send("since your elon's child, you get an extra 200 doge!")
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
               .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
           }
           if (x<25){
@@ -469,11 +482,11 @@ if (!cooldowns[message.author.id]){
             if (num>0){
               message.channel.send("At least you had a life saver (gold) You didn't die");
               previous = lifesaver;
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold-1, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.doge":-1}})
               return;
             }
-          await mongoclient.db("elonbot").collection(message.guild.id)
+          await mongoclient.db("elonbot").collection("everything")
                 .updateOne({name: message.author.id}, { $set: {
                   currency: {
                     usd: 0,
@@ -503,15 +516,14 @@ if (!cooldowns[message.author.id]){
             let increasesmall = 8*boost;
             let increase = 8000*boost
             message.channel.send("Congrats! You survived! You get "+increasesmall+"k doge for that hour of work!");
-            let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }
         }else if (jobNum === 7){
           let elon = await checkStuff(mongoclient,message.author.id)
           if (elon.hobby === "elon"){
             message.channel.send("since your elon's child, you get an extra 200 doge!")
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
               .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
           }
           message.channel.send("Quick! X Æ A-XII is starting to cry! Type the following phrase into the chat: \n `Rock-a-bye baby in the tree top. When the wind blows the cradle will rock. When the bough breaks, the cradle will fall. And down will come Baby, Cradle and all.`")
@@ -519,15 +531,13 @@ if (!cooldowns[message.author.id]){
           if (response === "Rock-a-bye baby in the tree top. When the wind blows the cradle will rock. When the bough breaks, the cradle will fall. And down will come Baby, Cradle and all."){
             let increase = 850*boost;
             message.channel.send("Congrats! The baby is now asleep and Elon comes in and rewards you with "+increase+" Doge!");
-            let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }else{
             let increase = 80*boost
             message.channel.send("X Æ A-XII is now rampaging through Elon's mansion, and then Elon comes in and is 'sorely disappointed' You only get "+increase+" Doge for that hour of grueling work");
-            let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+increase), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+            await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":increase}})
           }
           function selOption(){
             return new Promise(resolve => {
@@ -540,9 +550,13 @@ if (!cooldowns[message.author.id]){
             });
           }
         }else{
-          return message.channel.send("You currently don't have a job! To get one, do `el jobs`")
+          let path = message.author.id+".work"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+
+             return message.channel.send("You currently don't have a job! To get one, do `el jobs`")
         }
-    }else return message.channel.send("To get work again, you have to wait: "+ Math.round((cooldowns[message.author.id].work-Date.now())/60000) +" minutes before you can use this command again")
+    }else return message.channel.send("To work again, you have to wait: "+ Math.round((dbCooldowns[message.author.id].work-Date.now())/60000) +" minutes before you can use this command again")
   }
   if (message.content.toLowerCase().startsWith(prefix+"trade")){
     if (cooldowns[message.author.id].trade < Date.now()){
@@ -623,15 +637,18 @@ if (!cooldowns[message.author.id]){
       let amountToBuy = await func1(thenum);
       async function func1(thenum){
         var amountToBuy = 0;
+        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let dogePrice = Number(prices.dogecoin.usd)
+let ethPrice = Number(prices.ethereum.usd)
+let btcPrice = Number(prices.bitcoin.usd)
+
       if (coin === "doge"){
-        let temp = await CoinGeckoClient.coins.fetch("dogecoin");
-        amountToBuy = temp.data.market_data.current_price.usd*Number(thenum);
+        amountToBuy = dogePrice*Number(thenum);
       }else if (coin === "btc"){
-        let temp = await CoinGeckoClient.coins.fetch("bitcoin");
-        amountToBuy = temp.data.market_data.current_price.usd*Number(thenum);
+        amountToBuy = btcPrice*Number(thenum);
       }else if (coin === "eth"){
-        let temp = await CoinGeckoClient.coins.fetch("ethereum");
-        amountToBuy = temp.data.market_data.current_price.usd*Number(thenum);
+        amountToBuy = ethPrice*Number(thenum);
       }else if (coin === "tesla"){
         let data = await yahooStockPrices.getCurrentData("TSLA");
         amountToBuy = data.price*Number(thenum)
@@ -654,18 +671,21 @@ if (!cooldowns[message.author.id]){
       // totalAmount is the amount that they are going to spend in their requested currency
       let totalAmount = await func2(amountToBuy);
       async function func2(amountToBuy){
+        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let dogePrice = Number(prices.dogecoin.usd)
+let ethPrice = Number(prices.ethereum.usd)
+let btcPrice = Number(prices.bitcoin.usd)
+
         var totalAmount;
       if (x.toString() === "1"){
-        let temp1 = await CoinGeckoClient.coins.fetch("dogecoin");
-        totalAmount = amountToBuy/(temp1.data.market_data.current_price.usd);
+        totalAmount = amountToBuy/dogePrice
       }else if (x.toString() === "2"){
         totalAmount = amountToBuy;
       }else if (x.toString() === "3"){
-        let temp1 = await CoinGeckoClient.coins.fetch("bitcoin");
-        totalAmount = amountToBuy/temp1.data.market_data.current_price.usd
+        totalAmount = amountToBuy/btcPrice
       }else if (x.toString() === "4"){
-        let temp1 = await CoinGeckoClient.coins.fetch("ethereum");
-        totalAmount = amountToBuy/temp1.data.market_data.current_price.usd
+        totalAmount = amountToBuy/ethPrice
       }else if (x.toString() === "5"){
         let temp1 = await yahooStockPrices.getCurrentData("TSLA");
         totalAmount = amountToBuy/temp1.price
@@ -686,90 +706,69 @@ if (!cooldowns[message.author.id]){
         return message.channel.send("You don't have enough money lol imagine being poor.")
       }
       
-      console.log(totalAmount); // take away this num
-      console.log(Number(thenum)) // add this num
 
       totalAmount = Number(totalAmount);
       thenum = Number(thenum)
-      //console.log(x) //deduct the currency X
 
       //taking away stuff
       if (x.toString() === "1"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge-totalAmount), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":-totalAmount}})
       }else if (x.toString() === "2"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: (previous.currency.usd-totalAmount), btc: previous.currency.btc, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.usd":-totalAmount}})
       }else if (x.toString() === "3"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: previous.currency.usd, btc: previous.currency.btc-totalAmount, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.btc":-totalAmount}})
       }else if (x.toString() === "4"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth-totalAmount}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.eth":-totalAmount}})
       }else if (x.toString() === "5"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {stocks:{tesla: (previous.stocks.tesla-totalAmount), space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.tesla":-totalAmount}})
       }else if (x.toString() === "7"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox-totalAmount, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.roblox":-totalAmount}})
       }else if (x.toString() === "9"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks-totalAmount, elonstock: previous.stocks.elonstock}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.gameStonks":-totalAmount}})
       }else if (x.toString() === "10"){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock-totalAmount}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.elonstock":-totalAmount}})
       }
       //end of taking away stuff
 
       //start of adding stuff
       if (message.content.toLowerCase().includes("doge")){
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+thenum), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.doge":thenum}})
      }else if (message.content.toLowerCase().includes("bit")|| message.content.toLowerCase().includes("btc")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: previous.currency.usd, btc: previous.currency.btc+thenum, eth: previous.currency.eth}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.btc":thenum}})
      }else if (message.content.toLowerCase().includes("eth")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth+thenum}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.eth":thenum}})
      }else if (message.content.toLowerCase().includes("usd")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {currency:{doge: previous.currency.doge, usd: previous.currency.usd+thenum, btc: previous.currency.btc, eth: previous.currency.eth}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.usd":thenum}})
      }else if (message.content.toLowerCase().includes("tesla")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla+thenum, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.tesla":thenum}})
      }else if (message.content.toLowerCase().includes("space")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space+thenum, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.space":thenum}})
      }else if (message.content.toLowerCase().includes("bor")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring+thenum, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.boring":thenum}})
      }else if (message.content.toLowerCase().includes("elon")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock+thenum}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.elonstock":thenum}})
      }else if (message.content.toLowerCase().includes("roblox")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox+thenum, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks, elonstock: previous.stocks.elonstock}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.roblox":thenum}})
      }else if (message.content.toLowerCase().includes("game")||message.content.toLowerCase().includes("gme")){
-      let previous = await checkStuff(mongoclient, message.author.id)
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {stocks:{tesla: previous.stocks.tesla, space: previous.stocks.space, roblox: previous.stocks.roblox, boring: previous.stocks.boring, gameStonks: previous.stocks.gameStonks+thenum, elonstock: previous.stocks.elonstock}}})
+      await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.gameStonk":thenum}})
      }
      message.channel.send("Succesful transaction!")
     }
@@ -793,11 +792,18 @@ if (!cooldowns[message.author.id]){
 
   }
   if (message.content.toLowerCase().includes(prefix+"inv")&&!message.content.toLowerCase().includes("stock")){
-    let user = await checkStuff(mongoclient, message.author.id);
+    var balance
+    var tag;
+    if (message.mentions.users.first()){ balance = await checkStuff(mongoclient, message.mentions.users.first().id); tag = message.mentions.users.first().tag}
+    else {balance = await checkStuff(mongoclient, message.author.id); tag = message.author.tag}
+    if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
+
+    let user = balance;
+
     let owned = user.inventory;
     let embed = new Discord.MessageEmbed()
             .setColor('#9098a6')
-            .setTitle(message.member.user.tag + "'s" + " inventory")
+            .setTitle(tag + "'s" + " inventory")
 
             if (owned.teslas !== 0) embed.addFields({name: ':blue_car: Teslas - ' + '<:dogecoin:825188367636627456> ' + owned.teslas, value: "="+30000*owned.teslas+" Doge"})
             if (owned.rockets !== 0) embed.addFields({name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + owned.rockets, value: "="+30000*owned.rockets+" Doge"})
@@ -809,7 +815,15 @@ if (!cooldowns[message.author.id]){
           message.channel.send(embed);
   }
   if (message.content.toLowerCase().includes(prefix)&& message.content.toLowerCase().includes("stock")&&message.content.toLowerCase().includes("inv")){
-    let user = await checkStuff(mongoclient, message.author.id);
+
+    var balance
+    var tag;
+    if (message.mentions.users.first()){ balance = await checkStuff(mongoclient, message.mentions.users.first().id); tag = message.mentions.users.first().tag}
+    else {balance = await checkStuff(mongoclient, message.author.id); tag = message.author.tag}
+    if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
+
+    let user = balance;
+
     let temp1 = await yahooStockPrices.getCurrentData("TSLA");
     let tsla = Number(temp1.price)
     temp1 = await yahooStockPrices.getCurrentData("RBLX");
@@ -818,15 +832,15 @@ if (!cooldowns[message.author.id]){
     let gme = Number(temp1.price)
     let elonStock = Math.floor(Math.random() * 300);
 
-
-    let dogeData = await CoinGeckoClient.coins.fetch("dogecoin");
-    let dogePrice = dogeData.data.market_data.current_price.usd
+    let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+    prices = await prices.json()
+    let dogePrice = Number(prices.dogecoin.usd)
+    
     tsla = tsla/dogePrice;
     rblx = rblx/dogePrice;
     gme = gme/dogePrice;
     elonStock = elonStock/dogePrice;
     let userStocks = user.stocks;
-    console.log(userStocks.tesla + "="+tsla*userStocks.tesla)
     let embed = new Discord.MessageEmbed()
             .setColor('#9098a6')
             .setTitle("Stocks")
@@ -836,14 +850,11 @@ if (!cooldowns[message.author.id]){
           message.channel.send(embed);
   }
   if (message.content.toLowerCase() === prefix + 'stock' || message.content.toLowerCase() === prefix + 'stocks' || message.content.toLowerCase() === prefix+"stock list") {
-    let dogeCoin = await CoinGeckoClient.coins.fetch("dogecoin");
-    let priceOfDoge = dogeCoin.data.market_data.current_price.usd
-
-    let btc = await CoinGeckoClient.coins.fetch("bitcoin");
-    let priceOfBtc = btc.data.market_data.current_price.usd
-
-    let eth = await CoinGeckoClient.coins.fetch("ethereum");
-    let priceOfEth = btc.data.market_data.current_price.usd
+    let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let priceOfDoge = Number(prices.dogecoin.usd)
+let priceOfEth = Number(prices.ethereum.usd)
+let priceOfBtc = Number(prices.bitcoin.usd)
 
     let stockPrice = await yahooStockPrices.getCurrentData("TSLA");
     let totalAmount = stockPrice.price
@@ -884,7 +895,7 @@ if (!cooldowns[message.author.id]){
   }
   if (message.content.toLowerCase().startsWith(prefix+"buy item")||message.content.toLowerCase().includes(prefix+"buy")){
     var prices = {
-      rocket: 30000,
+      rockets: 30000,
       flamthrowers: 10000,
       nft: 100000,
       teslas: 30000,
@@ -893,7 +904,7 @@ if (!cooldowns[message.author.id]){
       twitter: 20000
     }
     var item = "none";
-    if (message.content.toLowerCase().includes("falcon")) item = "rocket";
+    if (message.content.toLowerCase().includes("falcon")) item = "rockets";
     else if (message.content.toLowerCase().includes("flame")) item = "flamthrowers"; //and yes it's spelled wrong but I'm too lazy to change it because then I have to delete mongodb entry and I don't want to do that
     else if (message.content.toLowerCase().includes("gold")) item = "gold";
     else if (message.content.toLowerCase().includes("twitter")||message.content.toLowerCase().includes("follow")) item = "twitter";
@@ -913,32 +924,31 @@ quant = Number(quant)
     if (response.toLowerCase() !== "yes") return message.channel.send("Ok! Canceled")
     if (user.currency.doge < prices[item]*quant) return message.channel.send("Tough luck! You don't have enough doge! To buy in a different currency, first exchange to doge.")
 
-    let previous = await checkStuff(mongoclient, message.author.id)
-    await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge-prices[item]*quant), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+    await mongoclient.db("elonbot").collection("everything")
+        .updateOne({name: message.author.id}, { $inc: {"currency.doge":-prices[item]*quant}})
 
     previous = await checkStuff(mongoclient, message.author.id)
-    if (item === "rocket"){
-    await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets+quant, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+    if (item === "rockets"){
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.rockets":quant}})
     }else if (item === "flamthrowers"){
-    await mongoclient.db("elonbot").collection(message.guild.id)
-      .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers+quant, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.flamthrowers":quant}})
     }else if (item === "nft"){
-      await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft+quant, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.nft":quant}})
       }else if (item === "teslas"){
-        await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas+quant, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.teslas":quant}})
         }else if (item === "gold"){
-          await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold+quant, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+          await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.gold":quant}})
           }else if (item === "houses"){
-            await mongoclient.db("elonbot").collection(message.guild.id)
-              .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses+quant, twitter: previous.inventory.twitter}}})
+            await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.houses":quant}})
             }else if (item === "twitter"){
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter+quant}}})
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.twitter":quant}})
               }
     message.channel.send("OK! The transaction has finished")
     function selOption(){
@@ -954,7 +964,7 @@ quant = Number(quant)
   }
   if (message.content.toLowerCase().startsWith(prefix+"sell item")||message.content.toLowerCase().includes(prefix+"sell")){
     var prices = {
-      rocket: 2400,
+      rockets: 2400,
       flamthrowers: 8000,
       nft: 100000,
       teslas: 24000,
@@ -969,7 +979,7 @@ quant = Number(quant)
 quant = Number(quant)
     if (Number(quant).toString().toLowerCase() === "nan") quant = 1;
 
-    if (message.content.toLowerCase().includes("falcon")) item = "rocket";
+    if (message.content.toLowerCase().includes("falcon")) item = "rockets";
     else if (message.content.toLowerCase().includes("flame")) item = "flamthrowers"; //and yes it's spelled wrong but I'm too lazy to change it because then I have to delete mongodb entry and I don't want to do that
     else if (message.content.toLowerCase().includes("gold")) item = "gold";
     else if (message.content.toLowerCase().includes("twitter")||message.content.toLowerCase().includes("follow")) item = "twitter";
@@ -978,40 +988,38 @@ quant = Number(quant)
     else return message.channel.send("That item isn't even a real thing! What were you even thinking? (You can't sell nft's) ");
     
     let userData = await checkStuff(mongoclient, message.author.id);
+    console.log(userData.inventory[item])
     if (userData.inventory[item] < quant) return message.channel.send("You don't have enough of that item in your inventory! To buy something, do `el buy item gold` for example");
     
     message.channel.send("Are you sure you would like to sell`"+quant+"` `"+item+"`s for `"+quant*prices[item]+"` Doge? Type yes/no")
     let response = await selOption()
     if (response.toLowerCase() !== "yes") return message.channel.send("Ok, nothing was changed")
 
-    let previous = await checkStuff(mongoclient, message.author.id)
 
-    await mongoclient.db("elonbot").collection(message.guild.id)
-    .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+prices[item]*quant), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
-
-
-    if (item === "rocket"){
-      await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets-quant, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
-      }else if (item === "flamthrowers"){
-      await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers-quant, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
-      }else if (item === "nft"){
-        await mongoclient.db("elonbot").collection(message.guild.id)
-          .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft-quant, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
-        }else if (item === "teslas"){
-          await mongoclient.db("elonbot").collection(message.guild.id)
-            .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas-quant, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
-          }else if (item === "gold"){
-            await mongoclient.db("elonbot").collection(message.guild.id)
-              .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold-quant, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
-            }else if (item === "houses"){
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses-quant, twitter: previous.inventory.twitter}}})
-              }else if (item === "twitter"){
-                await mongoclient.db("elonbot").collection(message.guild.id)
-                  .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter-quant}}})
-                }
+    await mongoclient.db("elonbot").collection("everything")
+        .updateOne({name: message.author.id}, { $inc: {"currency.doge":+prices[item]*quant}})
+    if (item === "rockets"){
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.rockets":-quant}})
+    }else if (item === "flamthrowers"){
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.flamthrowers":-quant}})
+    }else if (item === "nft"){
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.nft":-quant}})
+      }else if (item === "teslas"){
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.teslas":-quant}})
+        }else if (item === "gold"){
+          await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.gold":-quant}})
+          }else if (item === "houses"){
+            await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.houses":-quant}})
+            }else if (item === "twitter"){
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.twitter":-quant}})
+              }
         message.channel.send("Transaction Successful!")
     
     function selOption(){
@@ -1026,9 +1034,20 @@ quant = Number(quant)
     } 
   }
   if (message.content.toLowerCase().includes(prefix + "help")) {
+    if (message.content.toLowerCase() === prefix+"help vote"){
+      let embed = new Discord.MessageEmbed()
+        .setColor('#9098a6')
+        .setTitle("Voting").addFields(
+          { name: 'Go here: https://discordbotlist.com/bots/elon/upvote every 12 hours to vote for Elon Discord Bot!', value: 'In turn we will give you a chance at getting the following items:'},
+          { name: 'Chances', value: "1k-10k doge\nA falcon 9\n Gold" }
+        )
+      message.channel.send(embed);
+    }
     if (message.content.toLowerCase() === prefix + "help stock tesla" || message.content.toLowerCase() === prefix + "help stock teslas" || message.content.toLowerCase() === prefix + "help stocks tesla" || message.content.toLowerCase() === prefix + "help stocks teslas") {
-      let dogeCoin = await CoinGeckoClient.coins.fetch("dogecoin");
-      let priceOfDoge = dogeCoin.data.market_data.current_price.usd
+      let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let priceOfDoge = Number(prices.dogecoin.usd)
+
 
 
       let stockPrice = await yahooStockPrices.getCurrentData("TSLA");
@@ -1065,8 +1084,10 @@ quant = Number(quant)
     }
 
     if (message.content.toLowerCase() === prefix + "help stock elon" || message.content.toLowerCase() === prefix + "help stocks elon") {
-      let dogeCoin = await CoinGeckoClient.coins.fetch("dogecoin");
-      let priceOfDoge = dogeCoin.data.market_data.current_price.usd
+      let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+      prices = await prices.json()
+      let priceOfDoge = Number(prices.dogecoin.usd)
+
 
 
       let elonStock = Math.floor(Math.random() * 300);
@@ -1459,78 +1480,86 @@ quant = Number(quant)
       let x = Math.floor(Math.random() * 1000);
       if (x<400){
         message.channel.send("Congrats you survived and got 69420 dogecoins!");
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+69420), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
-        await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets-1, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"currency.doge":69420}})
+      
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.rockets":-1}})
         return;
       }else if (x<700){
         message.channel.send("You survived but didn't get any money out of it");
-        await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets-1, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.rockets":-1}})
         return;
       }else{
         message.channel.send("Ouch. Your rocket crashed, and you died.");
-        await mongoclient.db("elonbot").collection(message.guild.id)
+        // halp halp halp
+        await mongoclient.db("elonbot").collection("everything")
+        .updateOne({name: message.author.id}, { $inc: {"inventory.rockets":-1}})
+        if (userStuff.inventory.gold > 0){
+
+          await mongoclient.db("elonbot").collection("everything")
+        .updateOne({name: message.author.id}, { $inc: {"inventory.gold":-1}})
+
+          message.channel.send("Oh nevermind you had a life saver (gold) and got saved.");
+          return;
+        }
+        await mongoclient.db("elonbot").collection("everything")
                 .updateOne({name: message.author.id}, { $set: {
                   currency: {
                     usd: 0,
                     doge: 0,
                     btc: 0,
                     eth: 0,
-                 },
-                 stocks: {
-                    tesla: 0,
-                    space: 0,
-                    roblox: 0,
-                    boring: 0,
-                    gameStonks: 0,
-                    elonstock: 0
-                 },
-                 inventory: {
-                     rockets: 0,
-                     flamthrowers: 0,
-                     nft: 0,
-                     teslas: 0,
-                     gold: 0,
-                     houses: 0,
-                     twitter: 0
                  }
                 }})
         return;
       }
     }else if (message.content.toLowerCase().includes("flame")){
       if (cooldowns[message.author.id].flame === undefined) cooldown[message.author.id].flame = 0;
-      if (cooldowns[message.author.id].flame < Date.now()){
+      if (dbCooldowns[message.author.id].flame < Date.now()){
         delete cooldowns[message.author.id].flame;
          
         var minute = 60000;
         var hour = minute * 24;
         //Set cooldown
-        cooldowns[message.author.id].flame = Date.now() + 60000; //Set a 60 hour cooldown
+        let path = message.author.id+".flame"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:Date.now() + 60000}})
+
+        cooldowns[message.author.id].flame = Date.now() + 60000; //Set a 60 sec cooldown
       if (!message.mentions.users.first()){
-        cooldowns[message.author.id].flame = 0;
+        let path = message.author.id+".flame"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+
         return message.channel.send("You need to mention someone to kill!")
     }else{
+      let usrData = await checkStuff(mongoclient, message.author.id)
+      if (usrData.inventory.flamthrowers <1){
+        let path = message.author.id+".flame"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+        return message.channel.send("You don't even have a flamethrower. How does that even work?")
+      }
       message.channel.send("Use the Boring Company Flamethrower to attack someone. There's a 55% chance your target will die, and there's a 45% chance you will die. Are you sure you want to use this? (Yes/No)")
       let result = await selOption();
       if (result.toLowerCase() === "yes"||result.toLowerCase() === "y"){
         let x = Math.floor(Math.random() * 1000);
         if (x<550){
           message.channel.send("You successffuly killed "+message.mentions.users.first().tag);
-          await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers-1, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+          await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.flamthrowers":-1}})
         let lifesaver = await checkStuff(mongoclient, message.mentions.users.first().id)
             let num = lifesaver.inventory.gold;
             if (num>0){
-              message.channel.send("They had a life saver, so they are still alive");
-              previous = lifesaver;
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold-1, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+              message.channel.send("Scratch that, they had a life saver, so they are still alive");
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.mentions.users.first().id}, { $inc: {"inventory.gold":-1}})
               return;
             }
-            await mongoclient.db("elonbot").collection(message.guild.id)
+            await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {
           currency: {
             usd: 0,
@@ -1540,37 +1569,28 @@ quant = Number(quant)
          }
         }})
       }else{
+        let lifesaver = await checkStuff(mongoclient, message.author.id)
+            let num = lifesaver.inventory.gold;
+            if (num>0){
+              message.channel.send("You have a life saver, so you are still alive, (Your flamethrower was a cheap chinese phony)");
+              await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.gold":-1}})
+              return;
+            }
           message.channel.send("Your flamethrower turned out to be a cheap phony that was made in China. It blew up and took you with it.")
-          await mongoclient.db("elonbot").collection(message.guild.id)
+          await mongoclient.db("elonbot").collection("everything")
                 .updateOne({name: message.author.id}, { $set: {
                   currency: {
                     usd: 0,
                     doge: 0,
                     btc: 0,
                     eth: 0,
-                 },
-                 stocks: {
-                    tesla: 0,
-                    space: 0,
-                    roblox: 0,
-                    boring: 0,
-                    gameStonks: 0,
-                    elonstock: 0
-                 },
-                 inventory: {
-                     rockets: 0,
-                     flamthrowers: 0,
-                     nft: 0,
-                     teslas: 0,
-                     gold: 0,
-                     houses: 0,
-                     twitter: 0
                  }
                 }})
         }
       }else return message.channel.send("Ok, aborted!")
     }
-  }    else return message.channel.send("Spams not cool. Especailly when you want to kill people. You still have to wait: "+ Math.round((cooldowns[message.author.id].flame-Date.now())/1000) +" seconds before you can use this command again")
+  }    else return message.channel.send("Spams not cool. Especailly when you want to kill people. You still have to wait: "+ Math.round((dbCooldowns[message.author.id].flame-Date.now())/1000) +" seconds before you can use this command again")
     }
     function selOption(){
       return new Promise(resolve => {
@@ -1582,6 +1602,15 @@ quant = Number(quant)
         });
       });
     } 
+  }
+  if (message.content.toLowerCase().includes(prefix+"vot")){
+    let embed = new Discord.MessageEmbed()
+        .setColor('#9098a6')
+        .setTitle("Vote now!").addFields(
+          { name: 'Go here:', value: '[Click me!](https://discordbotlist.com/bots/elon/upvote)'},
+          { name: 'You will have a chance of getting the following:', value: "1k-10k doge\nA falcon 9\n Gold" }
+        )
+      message.channel.send(embed);
   }
   if (message.content.toLowerCase().startsWith(prefix+"uber")){
     if (cooldowns[message.author.id].uber === undefined) cooldown[message.author.id].uber = 0;
@@ -1597,18 +1626,16 @@ quant = Number(quant)
       let elon = await checkStuff(mongoclient,message.author.id)
       if (elon.hobby === "elon"){
         message.channel.send("since your elon's child, you get an extra 200 doge!")
-        await mongoclient.db("elonbot").collection(message.guild.id)
+        await mongoclient.db("elonbot").collection("everything")
           .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
       }
       if (x<5){
         message.channel.send("Your tesla broke down and blew up! Luckly you escaped just in time to survive.");
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas-1, gold: previous.inventory.gold, houses: previous.inventory.houses, twitter: previous.inventory.twitter}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.teslas":-1}})
       }else{
-        let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+x), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"currency.doge":x}})
         message.channel.send("You earned "+x+" doge");
         
       }
@@ -1625,25 +1652,22 @@ quant = Number(quant)
       var minute = 60000;
       var hour = minute * 24;
       //Set cooldown
-      console.log("a;lsdkjf;alsdf;lasjdf")
 
       cooldowns[message.author.id].rent = Date.now() + 60000; //Set a 60 hour cooldown
       let x = Math.floor(Math.random() * 500);
       let elon = await checkStuff(mongoclient,message.author.id)
       if (elon.hobby === "elon"){
         message.channel.send("since your elon's child, you get an extra 200 doge!")
-        await mongoclient.db("elonbot").collection(message.guild.id)
+        await mongoclient.db("elonbot").collection("everything")
           .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
       }
       if (x<5){
         message.channel.send("The weirdo that you rented your house to turned out to be Florida Man, and he let 1000 aligators rampage through your house, and then burned your house down to get rid of the. TLDR your house is gone");
-        let previous = await checkStuff(mongoclient, message.author.id)
-        await mongoclient.db("elonbot").collection(message.guild.id)
-        .updateOne({name: message.author.id}, { $set: {inventory:{rockets: previous.inventory.rockets, flamthrowers: previous.inventory.flamthrowers, nft: previous.inventory.nft, teslas: previous.inventory.teslas, gold: previous.inventory.gold, houses: previous.inventory.houses-1, twitter: previous.inventory.twitter}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"inventory.houses":-1}})
       }else{
-        let previous = await checkStuff(mongoclient, message.author.id)
-              await mongoclient.db("elonbot").collection(message.guild.id)
-                .updateOne({name: message.author.id}, { $set: {currency:{doge: (previous.currency.doge+x), usd: previous.currency.usd, btc: previous.currency.btc, eth: previous.currency.eth}}})
+        await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"currency.doge":x}})
         message.channel.send("You earned "+x+" doge");
         
       }
@@ -1655,15 +1679,14 @@ quant = Number(quant)
     getCoin();
     async function getCoin(){
     let coin = message.content.toLowerCase().slice(5+prefixlength);
-    if (coin.includes(" ")){
-      message.channel.send("that is an invalid coin");
-      return;
-    }
-    let data = await CoinGeckoClient.coins.fetch(coin);
-    if (!data.data.image){
+
+    let data = await fetch("https://api.coingecko.com/api/v3/coins/"+coin+"?localization=true");
+    data = await data.json()
+    if (!data.id){
       message.channel.send("Could not find coin with the given name");
       return;
     }
+  data.data = data;
   ///////////////////////////////////////////////
   let random = new Discord.MessageEmbed()
     .setTitle(data.data.name)
@@ -1698,13 +1721,15 @@ quant = Number(quant)
   }
   if (message.content.toLowerCase().startsWith(prefix+"get hob")){
     if (cooldowns[message.author.id].hobby === undefined) cooldown[message.author.id].hobby = 0;
-    if (cooldowns[message.author.id].hobby < Date.now()){
+    if (dbCooldowns[message.author.id].hobby < Date.now()){
       //let userid = message.mentions.users.first().id;
-      delete cooldowns[message.author.id].hobby;
        
       var minute = 60000;
       //Set cooldown
-      cooldowns[message.author.id].hobby = Date.now() + 180000; //Set a 60 sec cooldown
+      let path = message.author.id+".hobby"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:Date.now() + 180000}})
+
 
       let embed = new Discord.MessageEmbed()
             .setColor('#9098a6')
@@ -1716,9 +1741,25 @@ quant = Number(quant)
           message.channel.send(embed);
 
   let response = await selOption();
-  if (response.toLowerCase().includes("can")) return message.channel.send("Ok, canceled!")
-  if (Number(response).toString().toLowerCase() === "nan") return message.channel.send("That wasn't a valid option!")
-  if (Number(response)>3||Number(response)<1) return message.channel.send("That wasn't a valid option!")
+  if (response.toLowerCase().includes("can")){ 
+    let path = message.author.id+".hobby"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+
+    return message.channel.send("Ok, canceled!")
+  }
+  if (Number(response).toString().toLowerCase() === "nan"){
+    let path = message.author.id+".hobby"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+    return message.channel.send("That wasn't a valid option!")
+  }
+  if (Number(response)>3||Number(response)<1){ 
+    let path = message.author.id+".hobby"
+        await mongoclient.db("elonbot").collection("cooldowns")
+             .updateOne({name: "all"}, { $set: {[path]:0}})
+    return message.channel.send("That wasn't a valid option!")
+  }
   
   if (Number(response) === 1){
     message.channel.send("Rolling the virtual die...");
@@ -1755,7 +1796,7 @@ quant = Number(quant)
     }
   
   }
-}else return message.channel.send("To get a new hobby, you have to wait: "+ Math.round((cooldowns[message.author.id].hobby-Date.now())/60000) +" minutes before you can use this command again")
+}else return message.channel.send("To get a new hobby, you have to wait: "+ Math.round((dbCooldowns[message.author.id].hobby-Date.now())/60000) +" minutes before you can use this command again")
   function selOption(){
     return new Promise(resolve => {
       message.channel.awaitMessages(m => m.author.id === message.author.id,
@@ -1811,93 +1852,93 @@ quant = Number(quant)
     if (currentUser[catagory][things] < thenum) return message.channel.send("You don't have that many things to send!");
 
     if (things === "doge"){
-        await mongoclient.db("elonbot").collection(message.guild.id)
+        await mongoclient.db("elonbot").collection("everything")
             .updateOne({name: message.author.id}, { $set: {currency:{doge: (currentUser.currency.doge-thenum), usd: currentUser.currency.usd, btc: currentUser.currency.btc, eth: currentUser.currency.eth}}})
-        await mongoclient.db("elonbot").collection(message.guild.id)
+        await mongoclient.db("elonbot").collection("everything")
            .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (targetUser.currency.doge+thenum), usd: targetUser.currency.usd, btc: targetUser.currency.btc, eth: targetUser.currency.eth}}})
     }else if (things === "usd"){
-      await mongoclient.db("elonbot").collection(message.guild.id)
+      await mongoclient.db("elonbot").collection("everything")
           .updateOne({name: message.author.id}, { $set: {currency:{doge: (currentUser.currency.doge), usd: currentUser.currency.usd-thenum, btc: currentUser.currency.btc, eth: currentUser.currency.eth}}})
-      await mongoclient.db("elonbot").collection(message.guild.id)
+      await mongoclient.db("elonbot").collection("everything")
          .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (targetUser.currency.doge), usd: targetUser.currency.usd+thenum, btc: targetUser.currency.btc, eth: targetUser.currency.eth}}})
   }else if (things === "btc"){
-    await mongoclient.db("elonbot").collection(message.guild.id)
+    await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {currency:{doge: (currentUser.currency.doge), usd: currentUser.currency.usd, btc: currentUser.currency.btc-thenum, eth: currentUser.currency.eth}}})
-    await mongoclient.db("elonbot").collection(message.guild.id)
+    await mongoclient.db("elonbot").collection("everything")
        .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (targetUser.currency.doge), usd: targetUser.currency.usd, btc: targetUser.currency.btc+thenum, eth: targetUser.currency.eth}}})
 }else if (things === "eth"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
       .updateOne({name: message.author.id}, { $set: {currency:{doge: (currentUser.currency.doge), usd: currentUser.currency.usd, btc: currentUser.currency.btc, eth: currentUser.currency.eth-thenum}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
      .updateOne({name: message.mentions.users.first().id}, { $set: {currency:{doge: (targetUser.currency.doge), usd: targetUser.currency.usd, btc: targetUser.currency.btc, eth: targetUser.currency.eth+thenum}}})
 }
 /// 
 else if (things === "rockets"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets-thenum, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets+thenum, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter}}})
 }else if (things === "flamthrowers"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers-thenum, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers+thenum, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter}}})
 }else if (things === "teslas"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft-thenum, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft+thenum, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter}}})
 }else if (things === "teslas"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas-thenum, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas+thenum, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter}}})
 }else if (things === "gold"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold-thenum, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold+thenum, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter}}})
 }else if (things === "houses"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses-thenum, twitter: currentUser.inventory.twitter}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses+thenum, twitter: targetUser.inventory.twitter}}})
 }else if (things === "twitter"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {inventory:{rockets: currentUser.inventory.rockets, flamthrowers: currentUser.inventory.flamthrowers, nft: currentUser.inventory.nft, teslas: currentUser.inventory.teslas, gold: currentUser.inventory.gold, houses: currentUser.inventory.houses, twitter: currentUser.inventory.twitter-thenum}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {inventory:{rockets: targetUser.inventory.rockets, flamthrowers: targetUser.inventory.flamthrowers, nft: targetUser.inventory.nft, teslas: targetUser.inventory.teslas, gold: targetUser.inventory.gold, houses: targetUser.inventory.houses, twitter: targetUser.inventory.twitter+thenum}}})
 }
 ///
 else if (things === "tesla"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla-thenum, space: currentUser.stocks.space, roblox: currentUser.stocks.roblox, boring: currentUser.stocks.boring, gameStonks: currentUser.stocks.gameStonks, elonstock: currentUser.stocks.elonstock}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla+thenum, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock}}})
 }else if (things === "space"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla, space: currentUser.stocks.space-thenum, roblox: currentUser.stocks.roblox, boring: currentUser.stocks.boring, gameStonks: currentUser.stocks.gameStonks, elonstock: currentUser.stocks.elonstock}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space+thenum, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock}}})
 }else if (things === "roblox"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla, space: currentUser.stocks.space, roblox: currentUser.stocks.roblox-thenum, boring: currentUser.stocks.boring, gameStonks: currentUser.stocks.gameStonks, elonstock: currentUser.stocks.elonstock}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox+thenum, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock}}})
 }else if (things === "boring"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla, space: currentUser.stocks.space, roblox: currentUser.stocks.roblox, boring: currentUser.stocks.boring-thenum, gameStonks: currentUser.stocks.gameStonks, elonstock: currentUser.stocks.elonstock}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring+thenum, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock}}})
 }else if (things === "gameStonks"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla, space: currentUser.stocks.space, roblox: currentUser.stocks.roblox, boring: currentUser.stocks.boring, gameStonks: currentUser.stocks.gameStonks-thenum, elonstock: currentUser.stocks.elonstock}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks+thenum, elonstock: targetUser.stocks.elonstock}}})
 }else if (things === "elonstock"){
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.author.id}, { $set: {stocks:{tesla: currentUser.stocks.tesla, space: currentUser.stocks.space, roblox: currentUser.stocks.roblox, boring: currentUser.stocks.boring, gameStonks: currentUser.stocks.gameStonks, elonstock: currentUser.stocks.elonstock-thenum}}})
-  await mongoclient.db("elonbot").collection(message.guild.id)
+  await mongoclient.db("elonbot").collection("everything")
         .updateOne({name: message.mentions.users.first().id}, { $set: {stocks:{tesla: targetUser.stocks.tesla, space: targetUser.stocks.space, roblox: targetUser.stocks.roblox, boring: targetUser.stocks.boring, gameStonks: targetUser.stocks.gameStonks, elonstock: targetUser.stocks.elonstock+thenum}}})
 }
 if (things === "flamthrowers") things = "flamethrower"
@@ -1906,37 +1947,19 @@ message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user 
 
 
 
-
-
-
-
-
-
-
-
-
   async function updateDocumentSet(mongoclient, name, updatedlisting){
-              let result = await mongoclient.db("elonbot").collection(message.guild.id)
+              let result = await mongoclient.db("elonbot").collection("everything")
               .updateOne({ name: name}, {$set: updatedlisting});
   }
-  async function createCollection(collectionname){
-      //const uri = "mongodb+srv://monkey:monkey2008@cluster0.exqqa.mongodb.net/test";
-      const db = mongoclient.db("elonbot");
-      db.createCollection(collectionname, function(err, result){
-        console.log ("Server Created!");
-
-      })
-    }
   async function createListing(mongoclient, newWord){
 
-        let result = await mongoclient.db("elonbot").collection(message.guild.id).insertOne(newWord);
+        let result = await mongoclient.db("elonbot").collection("everything").insertOne(newWord);
 
       }
   async function signup(mongoclient){
         let userid = message.author.id;
-        let collection = message.guild.id;
         const db = mongoclient.db("elonbot");
-        let testresult = await db.collection(message.guild.id).find( {"name": userid}).count();
+        let testresult = await db.collection("everything").find( {"name": userid}).count();
 
         if (testresult === 0){
           await createListing(mongoclient,
@@ -1979,14 +2002,26 @@ message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user 
       }
   async function checkStuff(mongoclient, name){
       try{
-    let result = await mongoclient.db("elonbot").collection(message.guild.id)
+    let result = await mongoclient.db("elonbot").collection("everything")
     .findOne({name: name});
     return result;
       }catch(err){
           console.log(err)
       }
   }
-
+  async function checkCooldown(mongoclient, name){
+    try{
+  let result = await mongoclient.db("elonbot").collection("cooldowns")
+  .findOne({name: name});
+  return result;
+    }catch(err){
+        console.log(err)
+    }
+}
+async function updateCooldowns(mongoclient, name, updatedlisting){
+  let result = await mongoclient.db("elonbot").collection("cooldowns")
+  .updateOne({ name: name}, {$set: updatedlisting});
+}
   function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -1996,6 +2031,22 @@ message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user 
         }
       }
 })
+while(true){
+  await sleep(5000)
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  let x = Number(client.guilds.cache.size);
+  console.log(x)
+  fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
+    method: 'POST',
+    body: JSON.stringify({"guilds": x}),
+    headers: { 'Content-Type': 'application/json', "Authorization":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0IjoxLCJpZCI6IjgyNDczMDU1OTc3OTA0NTQxNyIsImlhdCI6MTYxNzIyNzk2NH0.f8Vba6p3rYYRAhGM_Bkr9NY787Vyo6si3e8D7H7twt4" }
+})
+await sleep(100000)
+
+
+}
 
 return mongoclient;
 });
