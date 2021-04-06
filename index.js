@@ -1,7 +1,5 @@
-
-// start of actual bot
-const CoinGecko = require('coingecko-api');
-const CoinGeckoClient = new CoinGecko();
+//const CoinGecko = require('coingecko-api');
+//const CoinGeckoClient = new CoinGecko();
 var yahooStockPrices = require("yahoo-stock-prices")
 const fetch = require("node-fetch")
 var falcon9price = 30000
@@ -20,7 +18,7 @@ const {MongoClient} = require('mongodb')
 const uri = "mongodb connection string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
-client.login("Discord secret bot key");
+client.login("Discord login token");
 
 var cooldowns = {}
 
@@ -75,7 +73,106 @@ await updateCooldowns(mongoclient, "all", {
   const db = mongoclient.db("elonbot");
   if (message){
     signup(mongoclient);
+    let userData = await checkStuff(mongoclient, message.author.id);
+    if (!userData.server){
+      await updateDocumentSet(mongoclient, message.author.id, {
+        server:{}
+      })
+    }
+    if (!userData.server[message.guild.id]){
+let dataPath = "server."+message.guild.id
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $set: {[dataPath]:"i"}})
 
+    }
+    let y = Math.floor(Math.random() * 1000);
+    if (y < 2 && message.content.toLowerCase().startsWith(prefix)){
+       var editThis = await message.channel.send("Woah! 0.1% chance that this happened! Elon just signed his name onto your chubby face! \n Type `Thank you daddy Elon!` Before he spanks you for not being grateful. (This only applies to the person who typed the command)")
+    let response = await selOption();
+    if (response.content.toLowerCase() === "thank you daddy elon!"){
+      message.channel.send("Noice! Elon gives you 10k doge, and you also take that selfie and gain 3k twitter followers.")
+      await mongoclient.db("elonbot").collection("everything")
+   .updateOne({name: message.author.id}, { $inc: {"inventory.twitter":3}})
+   await mongoclient.db("elonbot").collection("everything")
+   .updateOne({name: message.author.id}, { $inc: {"currency.doge": 10000}})
+   editThis.edit("Woah! 0.1% chance that this happened! Elon just signed his name onto your chubby face! \n Type `Thank you daddy Elon!` Before he spanks you for not being grateful. (This only applies to the person who typed the command) \n**(This event has ended. No more submissions allowed)**")
+   return;
+    }else{
+      editThis.edit("Woah! 0.1% chance that this happened! Elon just signed his name onto your chubby face! \n Type `Thank you daddy Elon!` Before he spanks you for not being grateful. (This only applies to the person who typed the command) \n**(This event has ended. No more submissions allowed)**")
+      await mongoclient.db("elonbot").collection("everything")
+   .updateOne({name: message.author.id}, { $inc: {"currency.doge":-1000}})
+      return message.channel.send("Uh oh... Elon isn't pleased. He takes away ~~your life~~ 1000 doge");
+    }
+    function selOption(){
+      return new Promise(resolve => {
+        message.channel.awaitMessages(m => m.author.id === message.author.id,
+        {max: 1, time: 15000}).then(collected => {
+          resolve(collected.first());
+        }).catch(() => {
+          resolve("no time")
+        });
+      });
+    } 
+  
+    } else if (y<5 && message.content.toLowerCase().startsWith(prefix)){
+     var editThis = await message.channel.send("Pog, Extra rare event time! Elon's new rocket just blew up! Be the first to take a picture of it!\n Type `Quick! take that rocket selfie! Click Click Click!`")
+     for (var x = 0; x<5; x++){
+      if (x === 3) {
+      editThis.edit("Pog, Extra rare event time! Elon's new rocket just blew up! Be the first to take a picture of it!\n Type `Quick! take that rocket selfie! Click Click Click!` \n**(This event has ended. No more submissions allowed)**")
+      return message.channel.send("Your time window expired! Try to take that selfie a bit quicker next time...");
+    }
+    let response = await selOption();
+    if (response.content.toLowerCase() === "quick! take that rocket selfie! click click click!"){
+      message.channel.send(response.author.tag+" was the first to take dat selfie and post it. You gained 1k twitter followers, and your fans also sent you "+y+" gold");
+      await mongoclient.db("elonbot").collection("everything")
+   .updateOne({name: message.author.id}, { $inc: {"inventory.twitter":1}})
+   await mongoclient.db("elonbot").collection("everything")
+   .updateOne({name: message.author.id}, { $inc: {"inventory.gold": y}})
+      editThis.edit("Pog, Extra rare event time! Elon's new rocket just blew up! Be the first to take a picture of it!\n Type `Quick! take that rocket selfie! Click Click Click!` \n**(This event has ended. No more submissions allowed)**")
+      return;
+    }else{
+      continue;
+    }
+    function selOption(){
+      return new Promise(resolve => {
+        message.channel.awaitMessages(m => m,
+        {max: 1, time: 30000}).then(collected => {
+          resolve(collected.first());
+        }).catch(() => {
+        resolve("bad")
+        });
+      });
+    }
+  }
+    } else if (y<10 && message.content.toLowerCase().startsWith(prefix)){
+      var editThis = await message.channel.send("Common event time! Quick! Elon just tweeted about a stock! Buy and sell it to make 10000 doge by typing: \n `buy buy buy buy sell sell sell`");
+      for (var x = 0; x<30; x++){
+        if (x === 28) {
+        editThis.edit("Common event time! Quick! Elon just tweeted about a stock! Buy and sell it to make 10000 doge by typing: \n `buy buy buy buy sell sell sell` \n**(This event has ended. No more submissions allowed)**")
+        return message.channel.send("No one got it. Ya'll way too slow.");
+      }
+      let response = await selOption();
+      if (response.content.toLowerCase() === "buy buy buy buy sell sell sell"){
+        message.channel.send(response.author.tag+" just played a ponzi scheme, and made 10000 doge!");
+        await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"currency.doge":10000}})
+        editThis.edit("Common event time! Quick! Elon just tweeted about a stock! Buy and sell it to make 10000 doge by typing: \n `buy buy buy buy sell sell sell` \n**(This event has ended. No more submissions allowed)**")
+        return;
+      }else{
+        continue;
+      }
+    }
+      function selOption(){
+        return new Promise(resolve => {
+          message.channel.awaitMessages(m => m,
+          {max: 1, time: 30000}).then(collected => {
+            resolve(collected.first());
+          }).catch(() => {
+          resolve("bad")
+          });
+        });
+      }
+    }
   }
   if (message.content.toLowerCase().startsWith(prefix+"launder")|| message.content.toLowerCase() === prefix+"la"){
     if (cooldowns[message.author.id].launder < Date.now()){
@@ -167,22 +264,29 @@ await updateCooldowns(mongoclient, "all", {
     var tag;
     if (message.mentions.users.first()){ balance = await checkStuff(mongoclient, message.mentions.users.first().id); tag = message.mentions.users.first().tag}
     else {balance = await checkStuff(mongoclient, message.author.id); tag = message.author.tag}
-    if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
-let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+    if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.");
+    if (!balance.currency.ltc){
+      await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $set: {"currency.ltc":0}})
+     balance.currency.ltc = 0;
+    }
+let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
 prices = await prices.json()
 let dogePrice = Number(prices.dogecoin.usd)
 let ethPrice = Number(prices.ethereum.usd)
 let btcPrice = Number(prices.bitcoin.usd)
+let ltcPrice = Number(prices.litecoin.usd)
 
     let output = new Discord.MessageEmbed()
     .setTitle(tag+"'s current wallet")
     .setColor("#9098a6")
     .addFields(
-        {name: balance.currency.doge.toString()+ " Doge coin",  value: "= "+Math.round(dogePrice * balance.currency.doge)+" usd" },
-        {name: balance.currency.usd.toString()+ " USD",       value: "= "+Math.round(balance.currency.usd)+ " usd"},
-        {name: balance.currency.btc.toString()+" BTC",   value: "= "+Math.round(btcPrice * balance.currency.btc)+" usd" },
-        {name: balance.currency.eth.toString()+" ETH",  value: "= "+Math.round(ethPrice * balance.currency.eth)+" usd" },
-        {name: "Total in USD",  value:  Math.round((Number(ethPrice) * Number(balance.currency.eth))+(Number(btcPrice) * Number(balance.currency.btc))+(Number(dogePrice) * Number(balance.currency.doge))+Number(balance.currency.usd))},
+        {name: Math.round(balance.currency.doge).toString()+ " Doge coin",  value: "= "+Math.round(dogePrice * balance.currency.doge)+" usd" },
+        {name: Math.round(balance.currency.usd).toString()+ " USD",       value: "= "+Math.round(balance.currency.usd)+ " usd"},
+        {name: (Math.round(1000*balance.currency.btc)/1000).toString()+" BTC",   value: "= "+Math.round(btcPrice * balance.currency.btc)+" usd" },
+        {name: (Math.round(100*balance.currency.eth)/100).toString()+" ETH",  value: "= "+Math.round(ethPrice * balance.currency.eth)+" usd" },
+        {name: (Math.round(100*balance.currency.ltc)/100).toString()+" LTC",  value: "= "+Math.round(ltcPrice * balance.currency.ltc)+" usd" },
+        {name: "Total in USD",  value:  Math.round((Number(ethPrice) * Number(balance.currency.eth))+(Number(btcPrice) * Number(balance.currency.btc))+(Number(dogePrice) * Number(balance.currency.doge))+Number(balance.currency.usd)+(Number(ltcPrice) * Number(balance.currency.ltc)))},
     )
     message.channel.send(output)
   }
@@ -602,22 +706,28 @@ let btcPrice = Number(prices.bitcoin.usd)
       message.channel.send("OK! What do you want to buy your "+thenum+" Roblox stocks with?");
       coin = "roblox"
     }else if (message.content.toLowerCase().includes("game")||message.content.toLowerCase().includes("gme")){
-      message.channel.send("OK! What do you want to buy your "+thenum+" Game stop stocks  with?");
+      message.channel.send("OK! What do you want to buy your "+thenum+" Game stop stocks with?");
       coin = "game"
+    }else if (message.content.toLowerCase().includes("ltc")||message.content.toLowerCase().includes("lite")){
+      message.channel.send("OK! What do you want to buy your "+thenum+" Litecoin with?");
+      coin = "ltc"
+    }else if (message.content.toLowerCase().includes("bb")|| message.content.toLowerCase().includes("black")){
+      message.channel.send("OK! What do you want to buy your "+ thenum+" BlackBerry Stocks with?");
+      coin == "bb"
     }
       let options = new Discord.MessageEmbed()
       .setTitle("Menu")
       .setColor("#9098a6")
       .addFields(
-          {name: "Currencies",  value: " 1. Dogecoin\n2. USD \n3. BTC\n4. ETH" },
-          {name: "Stocks",       value: "5. Tesla\n6. SpaceX (not public yet)\n7. Roblox\n8. Boring Company (Not public yet)\n9. Game Stonks\n10. Elon Stocks"},
+          {name: "Currencies",  value: " 1. Dogecoin\n2. USD \n3. BTC\n4. ETH\n 11. LTC" },
+          {name: "Stocks",      value: "5. Tesla\n6. SpaceX (not public yet)\n7. Roblox\n8. Boring Company (Not public yet)\n9. Game Stonks\n10. Elon Stocks\n 12. Blackberry"},
       )
       message.channel.send(options)
     let x = await selOption();
     if (Number(x).toString().toLowerCase() === "nan"){
       return message.channel.send("That wasn't a valid option, please try again.");
     }else{
-      if (Number(x)>10 || Number(x)<1){
+      if (Number(x)>12 || Number(x)<1){
         return message.channel.send("That wasn't a valid option, please try again.")
       }
       // put stuff here
@@ -633,15 +743,18 @@ let btcPrice = Number(prices.bitcoin.usd)
       else if (x.toString() === "8") return message.channel.send("The Boring Company is currently not a publicly listed company, so you can't buy it.")
       else if (x.toString() === "9") requestedAmount = currentWal.stocks.gameStonks;
       else if (x.toString() === "10") requestedAmount = currentWal.stocks.elonstock;
+      else if (x.toString() === "11"){requestedAmount = currentWal.currency.ltc;}
+      else if (x.toString() === "12") requestedAmount = currentWal.stocks.blackberry;
 
       let amountToBuy = await func1(thenum);
       async function func1(thenum){
         var amountToBuy = 0;
-        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
 prices = await prices.json()
 let dogePrice = Number(prices.dogecoin.usd)
 let ethPrice = Number(prices.ethereum.usd)
 let btcPrice = Number(prices.bitcoin.usd)
+let ltcPrice = Number(prices.litecoin.usd);
 
       if (coin === "doge"){
         amountToBuy = dogePrice*Number(thenum);
@@ -662,20 +775,25 @@ let btcPrice = Number(prices.bitcoin.usd)
         amountToBuy = Math.floor(Math.random() * 300)*Number(thenum);
       }else if (coin === "usd"){
         amountToBuy = Number(thenum)
+      }else if (coin === "ltc"){
+        amountToBuy = ltcPrice*Number(thenum)
+      }else if (coin === "bb"){
+        let data = await yahooStockPrices.getCurrentData("BB");
+        amountToBuy = data.price*Number(thenum)
       }
       return amountToBuy;
     }
-
       //_________________________________________________________________
       // amounttobuy is the amount that they want to buy converted to usdt
       // totalAmount is the amount that they are going to spend in their requested currency
       let totalAmount = await func2(amountToBuy);
       async function func2(amountToBuy){
-        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+        let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
 prices = await prices.json()
 let dogePrice = Number(prices.dogecoin.usd)
 let ethPrice = Number(prices.ethereum.usd)
 let btcPrice = Number(prices.bitcoin.usd)
+let ltcPrice = Number(prices.litecoin.usd);
 
         var totalAmount;
       if (x.toString() === "1"){
@@ -697,10 +815,18 @@ let btcPrice = Number(prices.bitcoin.usd)
         totalAmount = amountToBuy/temp1.price
       }else if (x.toString() === "10"){
         totalAmount = amountToBuy/Math.floor(Math.random() * 300)
+      }else if (x.toString() === "11"){
+        totalAmount = amountToBuy/ltcPrice
+      }else if (x.toString() === "12"){
+        let data = await yahooStockPrices.getCurrentData("BB");
+        totalAmount = amountToBuy/data.price
       }
       return totalAmount;
     }
-
+if (requestedAmount === undefined){
+  cooldowns[message.author.id].trade = 0;
+  return message.channel.send("You don't have enough money lol imagine being poor.")
+}
       if (totalAmount>requestedAmount){
         cooldowns[message.author.id].trade = 0;
         return message.channel.send("You don't have enough money lol imagine being poor.")
@@ -735,6 +861,12 @@ let btcPrice = Number(prices.bitcoin.usd)
       }else if (x.toString() === "10"){
         await mongoclient.db("elonbot").collection("everything")
              .updateOne({name: message.author.id}, { $inc: {"stocks.elonstock":-totalAmount}})
+      }else if (x.toString() === "11"){
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.ltc":-totalAmount}})
+      }else if (x.toString() === "12"){
+        await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"stocks.blackberry":-totalAmount}})
       }
       //end of taking away stuff
 
@@ -769,7 +901,13 @@ let btcPrice = Number(prices.bitcoin.usd)
      }else if (message.content.toLowerCase().includes("game")||message.content.toLowerCase().includes("gme")){
       await mongoclient.db("elonbot").collection("everything")
              .updateOne({name: message.author.id}, { $inc: {"stocks.gameStonk":thenum}})
-     }
+     }else if (message.content.toLowerCase().includes("ltc")||message.content.toLowerCase().includes("lite")){
+       await mongoclient.db("elonbot").collection("everything")
+             .updateOne({name: message.author.id}, { $inc: {"currency.ltc":thenum}})
+     }else if (message.content.toLowerCase().includes("bb")||message.content.toLowerCase().includes("black")){
+      await mongoclient.db("elonbot").collection("everything")
+            .updateOne({name: message.author.id}, { $inc: {"stocks.blackberry":thenum}})
+    }
      message.channel.send("Succesful transaction!")
     }
 
@@ -822,6 +960,17 @@ let btcPrice = Number(prices.bitcoin.usd)
     else {balance = await checkStuff(mongoclient, message.author.id); tag = message.author.tag}
     if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
 
+    if (!balance.stocks.blackberry && message.mentions.users.first()){
+      console.log("first")
+      await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.mentions.users.first().id}, { $set: {"stocks.blackberry":0}})
+     balance.stocks.blackberry = 0;
+    }else if (!balance.stocks.blackberry){
+      console.log("second")
+      await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $set: {"stocks.blackberry":0}})
+     balance.stocks.blackberry = 0;
+    }
     let user = balance;
 
     let temp1 = await yahooStockPrices.getCurrentData("TSLA");
@@ -830,6 +979,10 @@ let btcPrice = Number(prices.bitcoin.usd)
     let rblx = Number(temp1.price)
     temp1 = await yahooStockPrices.getCurrentData("GME");
     let gme = Number(temp1.price)
+
+    temp1 = await yahooStockPrices.getCurrentData("BB");
+    let bb = Number(temp1.price)
+
     let elonStock = Math.floor(Math.random() * 300);
 
     let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
@@ -845,21 +998,25 @@ let btcPrice = Number(prices.bitcoin.usd)
             .setColor('#9098a6')
             .setTitle("Stocks")
             .addFields(
-              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + "="+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + "="+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock)+ "="+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + ":video_game:  GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + "="+Math.round(gme*userStocks.gameStonks)+' Doge'}
+              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + " = "+Math.round(tsla*userStocks.tesla)+' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space)+ "= `(n/a)`"+'\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + " = "+Math.round(rblx*userStocks.roblox)+' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock)+ " = "+Math.round(elonStock*userStocks.elonstock)+' Doge\n' + ":video_game:  GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + " = "+Math.round(gme*userStocks.gameStonks)+' Doge\n' + "<:blackberry:828454560389529651>  Blackberry - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.blackberry) + " = "+Math.round(bb*userStocks.blackberry)+"Doge"}
             )
           message.channel.send(embed);
   }
   if (message.content.toLowerCase() === prefix + 'stock' || message.content.toLowerCase() === prefix + 'stocks' || message.content.toLowerCase() === prefix+"stock list") {
-    let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+    let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
 prices = await prices.json()
 let priceOfDoge = Number(prices.dogecoin.usd)
 let priceOfEth = Number(prices.ethereum.usd)
 let priceOfBtc = Number(prices.bitcoin.usd)
+let priceOfLtc = Number(prices.litecoin.usd)
 
     let stockPrice = await yahooStockPrices.getCurrentData("TSLA");
     let totalAmount = stockPrice.price
     let teslaConverted = Math.round(totalAmount/priceOfDoge)
 
+    let blackberrystockPrice = await yahooStockPrices.getCurrentData("RBLX");
+    let blackberrytotalAmount = blackberrystockPrice.price
+    let blackberryConverted = Math.round(blackberrytotalAmount/priceOfDoge)
     
     let robloxstockPrice = await yahooStockPrices.getCurrentData("RBLX");
     let robloxtotalAmount = robloxstockPrice.price
@@ -870,8 +1027,8 @@ let priceOfBtc = Number(prices.bitcoin.usd)
       .setColor('#9098a6')
       .setTitle("Stocks").addFields(
 
-        { name: 'Currencies', value: "<:doge:825396246931046412> Dogecoin - " + '<:dogecoin:825188367636627456> ' + "1" + '\n' + ":dollar: USD - " + '<:dogecoin:825188367636627456> ' + Math.round(1/priceOfDoge) + '\n' + "<:bitcoin:825388613285576775> Bitcoin - " + '<:dogecoin:825188367636627456> ' + priceOfBtc + '\n' + "<:ethereum:825388795054391296> Ethereum - " + '<:dogecoin:825188367636627456> ' + priceOfEth },
-        { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + teslaConverted + '\n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + 'N/A' + '\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + robloxConverted + '\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + "N/A" + '\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + elonStock },
+        { name: 'Currencies', value: "<:doge:825396246931046412> Dogecoin - " + '<:dogecoin:825188367636627456> ' + "1" + '\n' + ":dollar: USD - " + '<:dogecoin:825188367636627456> ' + Math.round(1/priceOfDoge) + '\n' + "<:bitcoin:825388613285576775> Bitcoin - " + '<:dogecoin:825188367636627456> ' + Math.round(priceOfBtc/priceOfDoge) + '\n' + "<:ethereum:825388795054391296> Ethereum - " + '<:dogecoin:825188367636627456> ' + Math.round(priceOfEth/priceOfDoge) + '\n' + "<:litecoin:828449525239775232> Litecoin - <:dogecoin:825188367636627456>" + Math.round(priceOfLtc/priceOfDoge)},
+        { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + teslaConverted + '\n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + 'N/A' + '\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + robloxConverted + '\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + "N/A" + '\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + elonStock +'\n'+ "<:blackberry:828454560389529651> Blackberry - <:dogecoin:825188367636627456>"+ blackberryConverted},
         { name: "Additional Info", value: '-For more information about each stock just use the ``el help stock [STOCK NAME]`` command'}
         )
     message.channel.send(embed);
@@ -1064,8 +1221,9 @@ let priceOfDoge = Number(prices.dogecoin.usd)
     }
 
     if (message.content.toLowerCase() === prefix + "help stock roblox" || message.content.toLowerCase() === prefix + "help stocks roblox") {
-      let dogeCoin = await CoinGeckoClient.coins.fetch("dogecoin");
-      let priceOfDoge = dogeCoin.data.market_data.current_price.usd
+      let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
+prices = await prices.json()
+let priceOfDoge = Number(prices.dogecoin.usd)
 
 
 
@@ -1097,7 +1255,7 @@ let priceOfDoge = Number(prices.dogecoin.usd)
         .setColor('#9098a6')
         .setTitle("Roblox Stock Information").addFields(
           { name: 'Price', value: '<:dogecoin:825188367636627456> ' + elonStock },
-          { name: 'Description', value: "Price is derived from a random number generator. It literally fuctuates 24/7" }
+          { name: 'Description', value: "Price is derived from a random number generator. It literally fluctuates 24/7" }
         )
       message.channel.send(embed);
     }
@@ -1944,6 +2102,31 @@ else if (things === "tesla"){
 if (things === "flamthrowers") things = "flamethrower"
 message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user `"+ message.mentions.users.first().tag+"`")
   }
+  if (message.content.toLowerCase().startsWith(prefix+"rich")){
+    let messageAuthor = await checkStuff(mongoclient, message.author.id);
+    let path = "server."+[message.guild.id]
+    let serverUsers = await mongoclient.db("elonbot").collection("everything")
+    .find({[path]:"i"}).sort({"currency.doge":-1})
+let serverRank = await serverUsers.toArray()
+    console.log(serverRank)
+    var cap;
+if (serverRank.length>9) cap = 9;
+else cap = serverRank.length;
+
+let embed = new Discord.MessageEmbed()
+        .setColor('#9098a6')
+        .setTitle("Top "+cap+" Users in this server")
+for (var x=0; x<cap; x++){
+  serverRank[x].tag
+  embed.addFields(
+    { name: serverRank[x].tag, value: "Doge: "+serverRank[x].currency.doge}
+  )
+}
+embed.addFields(
+  { name: "You: ", value: messageAuthor.currency.doge}
+)
+      message.channel.send(embed);
+  }
 
 
 
@@ -2025,6 +2208,13 @@ async function updateCooldowns(mongoclient, name, updatedlisting){
   function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
   }
+  function swap(json){
+    var ret = {};
+    for(var key in json){
+      ret[json[key]] = key;
+    }
+    return ret;
+  }
         } catch (e) {
           console.error(e.warn);
         } finally {
@@ -2041,7 +2231,7 @@ while(true){
   fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
     method: 'POST',
     body: JSON.stringify({"guilds": x}),
-    headers: { 'Content-Type': 'application/json', "Authorization":"thing here" }
+    headers: { 'Content-Type': 'application/json', "Authorization":"Key to publish things to discord bot list's api" }
 })
 await sleep(100000)
 
