@@ -1,6 +1,7 @@
 //const CoinGecko = require('coingecko-api');
 //const CoinGeckoClient = new CoinGecko();
 var yahooStockPrices = require("yahoo-stock-prices")
+var allStock = {};
 const fetch = require("node-fetch")
 var falcon9price = 30000
 var flamethrowerprice = 10000
@@ -15,9 +16,10 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "mongodb connection string";
+const uri = "your mongodb connection string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
+
 client.login("Discord login token");
 
 var cooldowns = {}
@@ -961,12 +963,10 @@ if (requestedAmount === undefined){
     if (!balance) return message.channel.send("That user isn't alive yet. (Hasn't typed anything yet) If you need to know, they have 0 of everything.")
 
     if (!balance.stocks.blackberry && message.mentions.users.first()){
-      console.log("first")
       await mongoclient.db("elonbot").collection("everything")
      .updateOne({name: message.mentions.users.first().id}, { $set: {"stocks.blackberry":0}})
      balance.stocks.blackberry = 0;
     }else if (!balance.stocks.blackberry){
-      console.log("second")
       await mongoclient.db("elonbot").collection("everything")
      .updateOne({name: message.author.id}, { $set: {"stocks.blackberry":0}})
      balance.stocks.blackberry = 0;
@@ -1010,16 +1010,13 @@ let priceOfEth = Number(prices.ethereum.usd)
 let priceOfBtc = Number(prices.bitcoin.usd)
 let priceOfLtc = Number(prices.litecoin.usd)
 
-    let stockPrice = await yahooStockPrices.getCurrentData("TSLA");
-    let totalAmount = stockPrice.price
+    let totalAmount = allStock.tsla.price
     let teslaConverted = Math.round(totalAmount/priceOfDoge)
 
-    let blackberrystockPrice = await yahooStockPrices.getCurrentData("RBLX");
-    let blackberrytotalAmount = blackberrystockPrice.price
+    let blackberrytotalAmount = allStock.bb.price
     let blackberryConverted = Math.round(blackberrytotalAmount/priceOfDoge)
     
-    let robloxstockPrice = await yahooStockPrices.getCurrentData("RBLX");
-    let robloxtotalAmount = robloxstockPrice.price
+    let robloxtotalAmount = allStock.rblx.price
     let robloxConverted = Math.round(robloxtotalAmount/priceOfDoge)
     let elonStock = Math.floor(Math.random() * 300);
 
@@ -1145,7 +1142,6 @@ quant = Number(quant)
     else return message.channel.send("That item isn't even a real thing! What were you even thinking? (You can't sell nft's) ");
     
     let userData = await checkStuff(mongoclient, message.author.id);
-    console.log(userData.inventory[item])
     if (userData.inventory[item] < quant) return message.channel.send("You don't have enough of that item in your inventory! To buy something, do `el buy item gold` for example");
     
     message.channel.send("Are you sure you would like to sell`"+quant+"` `"+item+"`s for `"+quant*prices[item]+"` Doge? Type yes/no")
@@ -1967,7 +1963,8 @@ let priceOfDoge = Number(prices.dogecoin.usd)
   }
   }
   if (message.content.toLowerCase().includes(prefix+"gift")||message.content.toLowerCase().includes(prefix+"give")){
-   if (!message.mentions.users.first()) return message.channel.send("You have to mention someone to give your stuff to!")
+   if (!message.mentions.users.first()) return message.channel.send("You have to mention someone to give your stuff to!");
+   
    var p = message.content.toLowerCase().indexOf(">");
     var str1 = message.content.toLowerCase().slice(p)
     let thenum11 = str1.match(/\d+/);
@@ -1995,17 +1992,21 @@ let priceOfDoge = Number(prices.dogecoin.usd)
     else if (message.content.toLowerCase().includes("tesla")||message.content.toLowerCase().includes("car")){ things = "teslas"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("gold")){ things = "gold"; catagory = "inventory";}
     else if (message.content.toLowerCase().includes("house")){ things = "houses"; catagory = "inventory";}
-    else if (message.content.toLowerCase().includes("twit")){ things = "twitter"; catagory = "inventory";}
+    else if (message.content.toLowerCase().includes("twit")){ things = "twitter"; catagory = "inventory"; message.channel.send("Wow you're actually allowed to do that? Giving fame works like that I guess?")}
     else return message.channel.send("You didn't specify a valid thing to give!")
     //
     // create a "no number" message here
     var n = message.content.toLowerCase().indexOf(">");
     var str = message.content.toLowerCase().slice(n)
     thenum = str.match(/\d+/)[0];
-    if (Number(thenum)<1) return message.channel.send("You have to give a person a number of items greater than 0, you idiot")
+
+    
+    if (Number(thenum)<1 || message.content.toLowerCase().includes("-")) return message.channel.send("You have to give a person a number of items greater than 0, you idiot")
     thenum = Number(thenum)
     let currentUser = await checkStuff(mongoclient, message.author.id);
     let targetUser = await checkStuff(mongoclient, message.mentions.users.first().id)
+
+    if (!targetUser) return message.channel.send("That user isn't alive yet. Go spam ping them to make them type something (don't though)")
 
     if (currentUser[catagory][things] < thenum) return message.channel.send("You don't have that many things to send!");
 
@@ -2102,13 +2103,12 @@ else if (things === "tesla"){
 if (things === "flamthrowers") things = "flamethrower"
 message.channel.send("Succesfully transfered `"+thenum+ "` `"+things+"` to user `"+ message.mentions.users.first().tag+"`")
   }
-  if (message.content.toLowerCase().startsWith(prefix+"rich")){
+  if (message.content.toLowerCase().startsWith(prefix+"rich")||message.content.toLowerCase().startsWith(prefix)&&message.content.toLowerCase().includes("board")){
     let messageAuthor = await checkStuff(mongoclient, message.author.id);
     let path = "server."+[message.guild.id]
     let serverUsers = await mongoclient.db("elonbot").collection("everything")
     .find({[path]:"i"}).sort({"currency.doge":-1})
 let serverRank = await serverUsers.toArray()
-    console.log(serverRank)
     var cap;
 if (serverRank.length>9) cap = 9;
 else cap = serverRank.length;
@@ -2119,7 +2119,7 @@ let embed = new Discord.MessageEmbed()
 for (var x=0; x<cap; x++){
   serverRank[x].tag
   embed.addFields(
-    { name: serverRank[x].tag, value: "Doge: "+serverRank[x].currency.doge}
+    { name: "#"+(x+1)+" "+serverRank[x].tag, value: "Doge: "+serverRank[x].currency.doge}
   )
 }
 embed.addFields(
@@ -2221,7 +2221,11 @@ async function updateCooldowns(mongoclient, name, updatedlisting){
         }
       }
 })
+refreshes()
+async function refreshes(){
 while(true){
+
+
   await sleep(5000)
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -2231,13 +2235,27 @@ while(true){
   fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
     method: 'POST',
     body: JSON.stringify({"guilds": x}),
-    headers: { 'Content-Type': 'application/json', "Authorization":"Key to publish things to discord bot list's api" }
+    headers: { 'Content-Type': 'application/json', "Authorization":"asdf ur private key I guess?" }
 })
 await sleep(100000)
 
 
 }
-
+}
+while(true){
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  try{
+  allStock.tsla = await yahooStockPrices.getCurrentData("TSLA");
+  allStock.bb = await yahooStockPrices.getCurrentData("BB");
+  allStock.rblx = await yahooStockPrices.getCurrentData("RBLX");
+  console.log("Stock Cycle done")
+  await sleep(10000)
+  }catch(err){
+    continue;
+  }
+}
 return mongoclient;
 });
 mongoclient.close();
