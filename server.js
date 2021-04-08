@@ -45,7 +45,7 @@ let randomId = await makeid(10)
     let results = await fetch('https://api.nowpayments.io/v1/payment', {
        method: 'POST',
        body: JSON.stringify(todo),
-       headers: { 'Content-Type': 'application/json', 'x-api-key':"secret sauce"}
+       headers: { 'Content-Type': 'application/json', 'x-api-key':"secret api key"}
        })
     results = await results.json();
     res.render("makepayment.ejs", {data: results});
@@ -55,7 +55,7 @@ app.post("/reward", async (req, res) => {
   console.log("pog boi I got a package")
   if (!req.headers) return res.status(400).send("You didn't even send ANY headers. Is that even possible?");
   if (!req.headers.authorization) return res.status(407).send("Authentication required");
-  if (req.headers.authorization !== "=LbFo}D./6(=GcURb9)/i^Cw>i/-w(-[_QCAhC?:Qqx2szgz$vzE56itzQaGF{k"){
+  if (req.headers.authorization !== "a thingy that I set"){
     console.log("sadge I might be getting hacked")
     return res.status(401).send("Uh Oh. If you're a hacker, f*** off. If you're not, sorry but you're not allowed to do that operation.");
   }
@@ -84,18 +84,30 @@ app.get("/discord-id", async (req, res)=>{
   res.redirect("https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
 })
 app.post("/payment-received", async (req, res)=>{
+console.log(req.body);
+console.log(req.headers)
+      const { createHmac } = require("crypto")
+var params = req.body;
+  const hmac = createHmac('sha512', "don't look at that");
+  hmac.update(JSON.stringify(params, Object.keys(params).sort()));
+  const signature = hmac.digest('hex');
+console.log("generated signature: "+ signature);
+console.log("given signature: "+ req.headers["x-nowpayments-sig"])
 
-  if (req.headers["x-nowpayments-sig"] !== "Secret signature pls don't hack me") return;
+if (req.headers["x-nowpayments-sig"] !== signature) return;
+
   if (req.body.payment_status === "waiting") return;
-  let user = await checkStuff(mongoclient, req.body.order_description.discordid);
-  if (user){
+  let desc = await JSON.parse(req.body.order_description);
+  console.log(desc)
+  let userData = await checkStuff(mongoclient, desc.discordid);
+  if (userData){
 
     if (!userData.inventory.small){
       await mongoclient.db("elonbot").collection("everything")
-     .updateOne({name: req.body.order_description.discordid}, { $set: {"inventory.small":1}})
+     .updateOne({name: desc.discordid}, { $set: {"inventory.small":1}})
     }else{
       await mongoclient.db("elonbot").collection("everything")
-     .updateOne({name: req.body.order_description.discordid}, { $inc: {"inventory.small":1}})
+     .updateOne({name: desc.discordid}, { $inc: {"inventory.small":1}})
     }
 
   console.log("wow that actually worked")
