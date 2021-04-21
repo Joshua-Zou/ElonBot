@@ -16,11 +16,11 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "your mongodb connection string";
+const uri = "mongodbconnection string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
 
-client.login("Discord login token");
+client.login("discordClientSecretKey");
 
 var cooldowns = {}
 
@@ -67,15 +67,30 @@ await updateCooldowns(mongoclient, "all", {
     work: 0,
     jobs: 0,
     flame: 0,
-    hobby: 0
+    hobby: 0,
+    misc:{
+      passive: 0
+    }
   }
 })
 }
 
   const db = mongoclient.db("elonbot");
-  if (message){
+  await preflight();
+
+  async function preflight(){
     signup(mongoclient);
     let userData = await checkStuff(mongoclient, message.author.id);
+    if (!userData.misc){
+      await updateDocumentSet(mongoclient, message.author.id, {
+        ["misc.passive"]: false
+      })
+    }
+    if (!dbCooldowns[message.author.id].misc){
+      let path = message.author.id+".misc"
+      await mongoclient.db("elonbot").collection("cooldowns")
+         .updateOne({name: "all"}, { $set: {[path]:{}}})
+    }
     if (!userData.server){
       await updateDocumentSet(mongoclient, message.author.id, {
         server:{}
@@ -85,7 +100,10 @@ await updateCooldowns(mongoclient, "all", {
 let dataPath = "server."+message.guild.id
       await mongoclient.db("elonbot").collection("everything")
       .updateOne({name: message.author.id}, { $set: {[dataPath]:"i"}})
-
+    }
+    if (!userData.inventory.small){
+      await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $set: {"inventory.small":0}})
     }
     let y = Math.floor(Math.random() * 1000);
     if (y < 2 && message.content.toLowerCase().startsWith(prefix)){
@@ -217,6 +235,10 @@ let dataPath = "server."+message.guild.id
       let userData = await checkStuff(mongoclient, message.author.id);
       let defendant = await checkStuff(mongoclient, message.mentions.users.first().id)
       if (!defendant){ cooldowns[message.author.id].sue = 0; return message.channel.send("That user isn't alive yet. Go make them type *any* message and then I will create something *just* for them")}
+      if (userData.misc.passive === true) {cooldowns[message.author.id].sue = 0; return message.channel.send("You're on passive mode right now! To sue someone, take it off with `el set passive false`")};
+      
+      if (!defendant.misc){defendant.misc = {}; defendant.misc.passive = false;}
+      if (defendant.misc.passive === true){cooldowns[message.author.id].sue = 0; return message.channel.send("What's wrong with you? The person you were trying to sue wants to be left alone right now.")}
       var threshold = 400;
       if (userData.hobby === "lawyer"&&defendant.hobby === "lawyer"){
         threshold = 400;
@@ -941,6 +963,7 @@ if (requestedAmount === undefined){
     let user = balance;
 
     let owned = user.inventory;
+    if (!owned.small) owned.small = 0;
     let embed = new Discord.MessageEmbed()
             .setColor('#9098a6')
             .setTitle(tag + "'s" + " inventory")
@@ -952,6 +975,7 @@ if (requestedAmount === undefined){
             if (owned.gold !== 0) embed.addFields({ name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + owned.gold, value: "="+10000*owned.gold+ "Doge"});
             if (owned.houses !== 0) embed.addFields({ name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + owned.houses, value: "="+30000*owned.houses+ " Doge"});
             if (owned.twitter !== 0) embed.addFields({ name: ' <:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + owned.twitter+"k", value: "="+20000*owned.twitter +" Doge"});
+            if (owned.small !== 0) embed.addFields({ name: ' :card_box:  Small Elon Boxes - ' + '<:dogecoin:825188367636627456> ' + owned.small, value: "="+10*owned.small +" Real USD"});
           message.channel.send(embed);
   }
   if (message.content.toLowerCase().includes(prefix)&& message.content.toLowerCase().includes("stock")&&message.content.toLowerCase().includes("inv")){
@@ -1745,6 +1769,54 @@ let priceOfDoge = Number(prices.dogecoin.usd)
       }else return message.channel.send("Ok, aborted!")
     }
   }    else return message.channel.send("Spams not cool. Especailly when you want to kill people. You still have to wait: "+ Math.round((dbCooldowns[message.author.id].flame-Date.now())/1000) +" seconds before you can use this command again")
+    }else if (message.content.toLowerCase().includes("elon")){
+      let embed = new Discord.MessageEmbed()
+        .setColor('#9098a6')
+        .setTitle("Which elon box would you like to use?").addFields(
+          { name: 'Elon boxes', value: '1. Small Elon Box'}
+        )
+      message.channel.send(embed);
+      let x = await selOption()
+      if (Number(x) !== 1) return message.channel.send("That wasn't a valid option!");
+      message.channel.send("How many would you like to use?");
+      let y = await selOption();
+      y = Number(y);
+      if (y.toString().toLowerCase() === "nan") return message.channel.send("That wasn't even a number. Do you need to go back to preschool or something to learn what a number is?")
+      var boxtype;
+      if (Number(x) === 1) boxtype = "small";
+      // make more later lol
+      let user = await checkStuff(mongoclient, message.author.id);
+      if (!user.inventory[boxtype]) {await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $set: {"inventory.small":0}}); 
+      return message.channel.send("You don't even have *any* "+boxtype+" elon boxes. What are you thinking?")}
+      if (user.inventory[boxtype]<y) return message.channel.send("Wow you don't even have "+y+ " "+boxtype+" elon boxes. How does that even work? Do you expect me to conjure one up mid air?");
+      var doge = 0;
+      var gold = 0;
+      var twitter = 0;
+      var nft = 0;
+      if (boxtype === "small"){
+      for (var t = 0; t<y; t++){
+        doge = Math.floor(Math.random() * 10000)+doge;
+        gold = gold+3;
+        let chance1 = Math.floor(Math.random() * 1000);
+        if (chance1<800) twitter = twitter+1;
+        let chance = Math.floor(Math.random() * 1000);
+        if (chance<600) nft = nft+1;
+      }
+     }
+      await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"currency.doge":doge}})
+     await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"inventory.gold":gold}})
+     await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"inventory.twitter":twitter}})
+     await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"inventory.nft":nft}})
+let p = y*-1
+     await mongoclient.db("elonbot").collection("everything")
+     .updateOne({name: message.author.id}, { $inc: {"inventory.small":p}})
+
+     message.channel.send("You got: `"+doge+"` doge, `"+gold+"` gold, `"+twitter+"k` twitter followers, and `"+nft+"` nft(s) from the `"+y+"` `"+boxtype+" elon boxes that you opened.")
     }
     function selOption(){
       return new Promise(resolve => {
@@ -2127,8 +2199,30 @@ embed.addFields(
 )
       message.channel.send(embed);
   }
+  if (message.content.toLowerCase().startsWith(prefix+"set")){
+    var msg = message.content.toLowerCase();
+    var setting;
+    var thing;
+    if (msg.includes("true")||msg.includes("on")||msg.includes("yes")) setting  = true
+    else if (msg.includes("false")||msg.includes("off")||msg.includes("no")) setting = false
+    else return message.channel.send("You didn't even specify what to set it to! Includes `yes/no` `on/off` or `true/false`");
+    
+    if (msg.includes("pass")){
+       thing = "passive";
+    }else return ("that isn't even a valid option idiot.");
+    if (dbCooldowns[message.author.id]["misc"][thing] > Date.now()) return message.channel.send("You still have to wait "+ Math.round((dbCooldowns[message.author.id]["misc"][thing]-Date.now())/60000) +" minutes before you can use this command again")
 
+    let pathto = "misc."+thing
+    await mongoclient.db("elonbot").collection("everything")
+         .updateOne({name: message.author.id}, { $set: {[pathto]:setting}})
 
+    let path = message.author.id+".misc."+thing
+
+    await mongoclient.db("elonbot").collection("cooldowns")
+         .updateOne({name: "all"}, { $set: {[path]:Date.now() + 1800000}})
+        
+    message.channel.send("Set `"+thing+"` to `"+setting.toString()+"`!")
+  }
 
   async function updateDocumentSet(mongoclient, name, updatedlisting){
               let result = await mongoclient.db("elonbot").collection("everything")
@@ -2235,7 +2329,7 @@ while(true){
   fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
     method: 'POST',
     body: JSON.stringify({"guilds": x}),
-    headers: { 'Content-Type': 'application/json', "Authorization":"asdf ur private key I guess?" }
+    headers: { 'Content-Type': 'application/json', "Authorization":"secretkey" }
 })
 await sleep(100000)
 
