@@ -16,11 +16,11 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const {MongoClient} = require('mongodb')
-const uri = "mongodbconnection string";
+const uri = "mongodb connection string";
 const mongoclient = new MongoClient(uri, {poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true,useUnifiedTopology: true});
 mongoclient.connect(async function(err, mongoclient){
 
-client.login("discordClientSecretKey");
+client.login("Discord bot token");
 
 var cooldowns = {}
 
@@ -57,7 +57,7 @@ if (!cooldowns[message.author.id]){
         flame: 0,
         uber: 0,
         rent: 0,
-        hobby: 0
+        hobby: 0,
     }
 }
 let dbCooldowns = await checkCooldown(mongoclient, "all");
@@ -68,6 +68,7 @@ await updateCooldowns(mongoclient, "all", {
     jobs: 0,
     flame: 0,
     hobby: 0,
+    steal: 0,
     misc:{
       passive: 0
     }
@@ -76,15 +77,22 @@ await updateCooldowns(mongoclient, "all", {
 }
 
   const db = mongoclient.db("elonbot");
-  await preflight();
+  if (message.content.toLowerCase().includes(prefix)){
+    await preflight()
+  }
 
   async function preflight(){
-    signup(mongoclient);
+    await signup(mongoclient);
     let userData = await checkStuff(mongoclient, message.author.id);
     if (!userData.misc){
       await updateDocumentSet(mongoclient, message.author.id, {
         ["misc.passive"]: false
       })
+    }
+    if (!dbCooldowns[message.author.id].steal){
+      let path = message.author.id+".steal"
+      await mongoclient.db("elonbot").collection("cooldowns")
+         .updateOne({name: "all"}, { $set: {[path]:0}})
     }
     if (!dbCooldowns[message.author.id].misc){
       let path = message.author.id+".misc"
@@ -300,17 +308,50 @@ let dogePrice = Number(prices.dogecoin.usd)
 let ethPrice = Number(prices.ethereum.usd)
 let btcPrice = Number(prices.bitcoin.usd)
 let ltcPrice = Number(prices.litecoin.usd)
+let totalUSD = Math.round((Number(ethPrice) * Number(balance.currency.eth))+(Number(btcPrice) * Number(balance.currency.btc))+(Number(dogePrice) * Number(balance.currency.doge))+Number(balance.currency.usd)+(Number(ltcPrice) * Number(balance.currency.ltc)))
+let amountOfDoge = Math.round(balance.currency.doge);
+let equivalantDoge = Math.round(dogePrice * balance.currency.doge)
 
-    let output = new Discord.MessageEmbed()
+let amountOfUsd = Math.round(balance.currency.usd)
+
+let amountOfBtc = Math.round(1000*balance.currency.btc)/1000
+let equivalantBtc = Math.round(btcPrice * balance.currency.btc)
+
+let amountOfEth = Math.round(100*balance.currency.eth)/100
+let equivalantEth = Math.round(ethPrice * balance.currency.eth);
+
+let amountOfLtc = Math.round(100*balance.currency.ltc)/100;
+let equivalantLtc = Math.round(ltcPrice * balance.currency.ltc);
+
+totalUSD = makeReadable(totalUSD);
+amountOfDoge = makeReadable(amountOfDoge);
+equivalantDoge = makeReadable(equivalantDoge);
+amountOfUsd = makeReadable(amountOfUsd);
+amountOfBtc = makeReadable(amountOfBtc);
+equivalantBtc = makeReadable(equivalantBtc);
+amountOfEth = makeReadable(amountOfEth);
+equivalantEth = makeReadable(equivalantEth);
+amountOfLtc = makeReadable(amountOfLtc);
+equivalantLtc = makeReadable(equivalantLtc)
+function makeReadable(total){
+if (total.toString().length > 12){ total = total.toLocaleString("en-US").toString(); total = total.slice(0, total.length-12)+" Billion"}
+else if (total.toString().length > 9) { total = total.toLocaleString("en-US").toString(); total = total.slice(0, total.length-8)+" Million"}
+else if (total.toString().length > 6){ total = total.toLocaleString("en-US").toString(); total = total.slice(0, total.length-4)+"K"}
+else if (total.toString().length > 3){
+  total = total.toLocaleString("en-US");
+}
+return total;
+}
+let output = new Discord.MessageEmbed()
     .setTitle(tag+"'s current wallet")
     .setColor("#9098a6")
     .addFields(
-        {name: Math.round(balance.currency.doge).toString()+ " Doge coin",  value: "= "+Math.round(dogePrice * balance.currency.doge)+" usd" },
-        {name: Math.round(balance.currency.usd).toString()+ " USD",       value: "= "+Math.round(balance.currency.usd)+ " usd"},
-        {name: (Math.round(1000*balance.currency.btc)/1000).toString()+" BTC",   value: "= "+Math.round(btcPrice * balance.currency.btc)+" usd" },
-        {name: (Math.round(100*balance.currency.eth)/100).toString()+" ETH",  value: "= "+Math.round(ethPrice * balance.currency.eth)+" usd" },
-        {name: (Math.round(100*balance.currency.ltc)/100).toString()+" LTC",  value: "= "+Math.round(ltcPrice * balance.currency.ltc)+" usd" },
-        {name: "Total in USD",  value:  Math.round((Number(ethPrice) * Number(balance.currency.eth))+(Number(btcPrice) * Number(balance.currency.btc))+(Number(dogePrice) * Number(balance.currency.doge))+Number(balance.currency.usd)+(Number(ltcPrice) * Number(balance.currency.ltc)))},
+        {name: amountOfDoge+ " Doge coin",  value: "= "+equivalantDoge+" usd" },
+        {name: amountOfUsd+ " USD",       value: "= "+amountOfUsd+ " usd"},
+        {name: amountOfBtc+" BTC",   value: "= "+equivalantBtc+" usd" },
+        {name: amountOfEth+" ETH",  value: "= "+equivalantEth+" usd" },
+        {name: amountOfLtc+" LTC",  value: "= "+equivalantLtc+" usd" },
+        {name: "Total in USD",  value: totalUSD},
     )
     message.channel.send(output)
   }
@@ -485,7 +526,7 @@ let ltcPrice = Number(prices.litecoin.usd)
               message.channel.send("At least you had a life saver (gold) You didn't die");
               previous = lifesaver;
               await mongoclient.db("elonbot").collection("everything")
-      .updateOne({name: message.author.id}, { $inc: {"inventory.doge":-1}})
+      .updateOne({name: message.author.id}, { $inc: {"inventory.gold":-1}})
               return;
             }
             await mongoclient.db("elonbot").collection("everything")
@@ -611,7 +652,7 @@ let ltcPrice = Number(prices.litecoin.usd)
               message.channel.send("At least you had a life saver (gold) You didn't die");
               previous = lifesaver;
               await mongoclient.db("elonbot").collection("everything")
-      .updateOne({name: message.author.id}, { $inc: {"inventory.doge":-1}})
+      .updateOne({name: message.author.id}, { $inc: {"inventory.gold":-1}})
               return;
             }
           await mongoclient.db("elonbot").collection("everything")
@@ -1888,7 +1929,7 @@ let p = y*-1
           .updateOne({name: message.author.id}, { $set: {currency:{doge: (elon.currency.doge+200), usd: elon.currency.usd, btc: elon.currency.btc, eth: elon.currency.eth}}})
       }
       if (x<5){
-        message.channel.send("The weirdo that you rented your house to turned out to be Florida Man, and he let 1000 aligators rampage through your house, and then burned your house down to get rid of the. TLDR your house is gone");
+        message.channel.send("The weirdo that you rented your house to turned out to be Florida Man, and he let 1000 aligators rampage through your house, and then burned your house down to get rid of them. TLDR your house is gone");
         await mongoclient.db("elonbot").collection("everything")
       .updateOne({name: message.author.id}, { $inc: {"inventory.houses":-1}})
       }else{
@@ -2223,7 +2264,54 @@ embed.addFields(
         
     message.channel.send("Set `"+thing+"` to `"+setting.toString()+"`!")
   }
+  if (message.content.toLowerCase().includes(prefix+"steal")){
+    var item = "none";
+    const probability = {
+      rockets:5,
+      flamthrowers: 45,
+      teslas: 30,
+      gold: 45
+    }
+    if (!message.mentions.users.first()) return message.channel.send("Seriously? You say you want to steal yet never mention who.");
+    if (message.mentions.users.first().id === message.author.id) return message.channel.send("Yes. Stealing from yourself is a great idea");
+    if (message.content.toLowerCase().includes("twit")) return message.channel.send("Woah I never knew you could steal twitter followers!");
+    if (message.content.toLowerCase().includes("nft")) return message.channel.send("You can steal digital items? Never knew that.");
+    if (message.content.toLowerCase().includes("house")) return message.channel.send("Wow tech these days! Stealing houses is possible now?");
 
+    if (dbCooldowns[message.author.id].steal < Date.now()){
+       
+      let defendant = await checkStuff(mongoclient, message.mentions.users.first().id)
+      if (!defendant){ cooldowns[message.author.id].steal = 0; return message.channel.send("That user isn't alive yet. Go make them type *any* message and then I will create something *just* for them")}
+      let path1 = message.author.id+".steal"
+      await mongoclient.db("elonbot").collection("cooldowns")
+          .updateOne({name: "all"}, { $set: {[path1]:Date.now() + 60000}})
+      var msg = message.content.toLowerCase();
+    if (msg.includes("rocket")||msg.includes("falcon")) item = "rockets";
+    else if (msg.includes("flam")) item = "flamthrowers";
+    else if (msg.includes("tesla")||msg.includes("car")) item = "teslas";
+    else if (msg.includes("gold")) item = "gold";
+    if (item === "none") return message.channel.send("That isn't even an option what are you thinking?");
+    var chance = probability[item];
+    var path = "inventory."+item;
+    if (defendant.inventory[item] === 0) return message.channel.send("That person has *nothing*! Why you bully them?") 
+    let random = Math.floor(Math.random() * 100);
+    if (random<chance){
+      message.channel.send("Wow you actually were able to steal that!");
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {[path]:1}})
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.mentions.users.first().id}, { $inc: {[path]:-1}})
+      //good
+    }else{
+      message.channel.send("You got caught while you tried stealing a "+item+" from "+message.mentions.users.first().tag+"! You had to pay 1000 doge for all the damage you caused.")
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.author.id}, { $inc: {"currency.doge":-1000}})
+      await mongoclient.db("elonbot").collection("everything")
+      .updateOne({name: message.mentions.users.first().id}, { $inc: {"currency.doge":1000}})
+      //take away
+    }
+  }else return message.channel.send("To steal again, you have to wait: "+ Math.round((dbCooldowns[message.author.id].steal-Date.now())/1000) +" seconds before you can use this command again")
+  }
   async function updateDocumentSet(mongoclient, name, updatedlisting){
               let result = await mongoclient.db("elonbot").collection("everything")
               .updateOne({ name: name}, {$set: updatedlisting});
@@ -2329,7 +2417,7 @@ while(true){
   fetch('https://discordbotlist.com/api/v1/bots/824730559779045417/stats', {
     method: 'POST',
     body: JSON.stringify({"guilds": x}),
-    headers: { 'Content-Type': 'application/json', "Authorization":"secretkey" }
+    headers: { 'Content-Type': 'application/json', "Authorization":"DBL token" }
 })
 await sleep(100000)
 
