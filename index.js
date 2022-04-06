@@ -3,6 +3,7 @@
 var yahooStockPrices = require("yahoo-stock-prices")
 var allStock = {};
 const fetch = require("node-fetch")
+const secrets = require("./secrets.json")
 var falcon9price = 30000
 var flamethrowerprice = 10000
 var nftprice = 100000
@@ -16,13 +17,13 @@ const discord = require('discord.js');
 const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const { MongoClient } = require('mongodb')
-const uri = "Mongodb Connection string";
+const uri = secrets.mongodb;
 const mongoclient = new MongoClient(uri, { poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true, useUnifiedTopology: true });
 var commandPerSecond = 0;
 var commandPerMinute = [];
 mongoclient.connect(async function (err, mongoclient) {
 
-  client.login("Discord Bot Token");
+  client.login(secrets.discordBotToken);
 
   var cooldowns = {}
 
@@ -2437,7 +2438,7 @@ mongoclient.connect(async function (err, mongoclient) {
   })
   const { AutoPoster } = require('topgg-autoposter')
 
-  const poster = AutoPoster('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgyNDczMDU1OTc3OTA0NTQxNyIsImJvdCI6dHJ1ZSwiaWF0IjoxNjI0OTIxMTg5fQ.eaOgf6ph9LEUFuEUI6py8rwcjf1-42ygNhP6mW7Hzgc', client)
+  const poster = AutoPoster(secrets.topgg, client)
   refreshes()
   calculateMsgPerMinute();
   async function refreshes() {
