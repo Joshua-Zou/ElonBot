@@ -21,6 +21,24 @@ const uri = secrets.mongodb;
 const mongoclient = new MongoClient(uri, { poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true, useUnifiedTopology: true });
 var commandPerSecond = 0;
 var commandPerMinute = [];
+
+const emojis = {
+  "dogecoin": "<:dogecoin:972591861065711646>",
+  "doge": "<:doge:972598149518590042>",
+  "bitcoin": "<:bitcoin:972599884073041930>",
+  "gold": "<:gold:972601920801874001>",
+  "twitter": "<:twitter:972602483589406750>",
+  "tesla": "<:tesla:972603325356843048>",
+  "roblox": "<:roblox:972604124787003402>",
+  "theboringcompany": "<:theboringcompany:972604995381907546>",
+  "elon": "<:elon:972605676847251457>",
+  "blackberry": "<:blackberry:972606431830376468>",
+  "ethereum": "<:ethereum:972607077233098762>",
+  "litecoin": "<:litecoin:972607917331214376>",
+}
+
+
+
 mongoclient.connect(async function (err, mongoclient) {
 
   client.login(secrets.discordBotToken);
@@ -380,9 +398,9 @@ mongoclient.connect(async function (err, mongoclient) {
               .setTitle("Choose a Job")
               .setColor("#9098a6")
               .addFields(
-                { name: "SpaceX jobs", value: "1. Coder - <:dogecoin:825188367636627456> 1,000\n2. Accountant - <:dogecoin:825188367636627456> 600\n3. Flight Computer - <:dogecoin:825188367636627456> 10,000 ||Half chance of dying||" },
-                { name: "Tesla Jobs", value: "4. Engineer - <:dogecoin:825188367636627456> 950\n5. Accountant - <:dogecoin:825188367636627456> 650\n6. Test Driver - <:dogecoin:825188367636627456> 8,000 ||Quarter chance of dying||" },
-                { name: "Miscelanious", value: "7. Babysiting X Æ A-XII - <:dogecoin:825188367636627456> 850" },
+                { name: "SpaceX jobs", value: `1. Coder - ${emojis.dogecoin} 1,000\n2. Accountant - ${emojis.dogecoin} 600\n3. Flight Computer - ${emojis.dogecoin} 10,000 ||Half chance of dying||` },
+                { name: "Tesla Jobs", value: `4. Engineer - ${emojis.dogecoin} 950\n5. Accountant - ${emojis.dogecoin} 650\n6. Test Driver - ${emojis.dogecoin} 8,000 ||Quarter chance of dying||` },
+                { name: "Miscelanious", value: `7. Babysiting X Æ A-XII - ${emojis.dogecoin} 850` },
                 { name: "Additional Info", value: "-To choose a job send the message corresponding to it (or type cancel to cancel the operation)" },
               )
             message.channel.send(output)
@@ -1026,14 +1044,14 @@ mongoclient.connect(async function (err, mongoclient) {
             .setColor('#9098a6')
             .setTitle(tag + "'s" + " inventory")
 
-          if (owned.teslas !== 0) embed.addFields({ name: ':blue_car: Teslas - ' + '<:dogecoin:825188367636627456> ' + owned.teslas, value: "=" + 30000 * owned.teslas + " Doge" })
-          if (owned.rockets !== 0) embed.addFields({ name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + owned.rockets, value: "=" + 30000 * owned.rockets + " Doge" })
-          if (owned.flamthrowers !== 0) embed.addFields({ name: ':fire: Flamethrower - ' + '<:dogecoin:825188367636627456> ' + owned.flamthrowers, value: "=" + 10000 * owned.flamthrowers + " Doge" })
-          if (owned.nft !== 0) embed.addFields({ name: ':coin: NFT - ' + '<:dogecoin:825188367636627456> ' + owned.nft, value: 100000 * owned.nft + "Doge" });
-          if (owned.gold !== 0) embed.addFields({ name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + owned.gold, value: "=" + 10000 * owned.gold + "Doge" });
-          if (owned.houses !== 0) embed.addFields({ name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + owned.houses, value: "=" + 30000 * owned.houses + " Doge" });
-          if (owned.twitter !== 0) embed.addFields({ name: ' <:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + owned.twitter + "k", value: "=" + 20000 * owned.twitter + " Doge" });
-          if (owned.small !== 0) embed.addFields({ name: ' :card_box:  Small Elon Boxes - ' + '<:dogecoin:825188367636627456> ' + owned.small, value: "=" + 10 * owned.small + " Real USD" });
+          if (owned.teslas !== 0) embed.addFields({ name: ':blue_car: Teslas - ' + `${emojis.dogecoin} ` + owned.teslas, value: "=" + 30000 * owned.teslas + " Doge" })
+          if (owned.rockets !== 0) embed.addFields({ name: ':rocket: Falcon 9 - ' + `${emojis.dogecoin} ` + owned.rockets, value: "=" + 30000 * owned.rockets + " Doge" })
+          if (owned.flamthrowers !== 0) embed.addFields({ name: ':fire: Flamethrower - ' + `${emojis.dogecoin} ` + owned.flamthrowers, value: "=" + 10000 * owned.flamthrowers + " Doge" })
+          if (owned.nft !== 0) embed.addFields({ name: ':coin: NFT - ' + `${emojis.dogecoin} ` + owned.nft, value: 100000 * owned.nft + "Doge" });
+          if (owned.gold !== 0) embed.addFields({ name: `${emojis.gold} Gold - ` + `${emojis.dogecoin} ` + owned.gold, value: "=" + 10000 * owned.gold + "Doge" });
+          if (owned.houses !== 0) embed.addFields({ name: ':house_with_garden: House - ' + `${emojis.dogecoin} ` + owned.houses, value: "=" + 30000 * owned.houses + " Doge" });
+          if (owned.twitter !== 0) embed.addFields({ name: `${emojis.twitter} Twitter Followers - ` + `${emojis.dogecoin} ` + owned.twitter + "k", value: "=" + 20000 * owned.twitter + " Doge" });
+          if (owned.small !== 0) embed.addFields({ name: ' :card_box:  Small Elon Boxes - ' + `${emojis.dogecoin} ` + owned.small, value: "=" + 10 * owned.small + " Real USD" });
           message.channel.send(embed);
         }
         if (message.content.toLowerCase().includes(prefix) && message.content.toLowerCase().includes("stock") && message.content.toLowerCase().includes("inv")) {
@@ -1080,7 +1098,7 @@ mongoclient.connect(async function (err, mongoclient) {
             .setColor('#9098a6')
             .setTitle("Stocks")
             .addFields(
-              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.tesla) + " = " + Math.round(tsla * userStocks.tesla) + ' Doge \n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.space) + "= `(n/a)`" + '\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.roblox) + " = " + Math.round(rblx * userStocks.roblox) + ' Doge\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.boring) + ' = `(n/a)`\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.elonstock) + " = " + Math.round(elonStock * userStocks.elonstock) + ' Doge\n' + ":video_game:  GameStonks - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.gameStonks) + " = " + Math.round(gme * userStocks.gameStonks) + ' Doge\n' + "<:blackberry:828454560389529651>  Blackberry - " + '<:dogecoin:825188367636627456> ' + Math.round(userStocks.blackberry) + " = " + Math.round(bb * userStocks.blackberry) + "Doge" }
+              { name: "Stocks", value: `${emojis.tesla} Tesla - ` + `${emojis.dogecoin} ` + Math.round(userStocks.tesla) + " = " + Math.round(tsla * userStocks.tesla) + ' Doge \n' + ":rocket: SpaceX - " + `${emojis.dogecoin} ` + Math.round(userStocks.space) + "= `(n/a)`" + '\n' + `${emojis.roblox} Roblox - ` + `${emojis.dogecoin} ` + Math.round(userStocks.roblox) + " = " + Math.round(rblx * userStocks.roblox) + ' Doge\n' + `${emojis.theboringcompany} Boring Company - ` + `${emojis.dogecoin} ` + Math.round(userStocks.boring) + ' = `(n/a)`\n' + `${emojis.elon} Elon - ` + `${emojis.dogecoin} ` + Math.round(userStocks.elonstock) + " = " + Math.round(elonStock * userStocks.elonstock) + ' Doge\n' + ":video_game:  GameStonks - " + `${emojis.dogecoin} ` + Math.round(userStocks.gameStonks) + " = " + Math.round(gme * userStocks.gameStonks) + ' Doge\n' + `${emojis.blackberry}  Blackberry - ` + `${emojis.dogecoin} ` + Math.round(userStocks.blackberry) + " = " + Math.round(bb * userStocks.blackberry) + "Doge" }
             )
           message.channel.send(embed);
         }
@@ -1106,8 +1124,8 @@ mongoclient.connect(async function (err, mongoclient) {
             .setColor('#9098a6')
             .setTitle("Stocks").addFields(
 
-              { name: 'Currencies', value: "<:doge:825396246931046412> Dogecoin - " + '<:dogecoin:825188367636627456> ' + "1" + '\n' + ":dollar: USD - " + '<:dogecoin:825188367636627456> ' + Math.round(1 / priceOfDoge) + '\n' + "<:bitcoin:825388613285576775> Bitcoin - " + '<:dogecoin:825188367636627456> ' + Math.round(priceOfBtc / priceOfDoge) + '\n' + "<:ethereum:825388795054391296> Ethereum - " + '<:dogecoin:825188367636627456> ' + Math.round(priceOfEth / priceOfDoge) + '\n' + "<:litecoin:828449525239775232> Litecoin - <:dogecoin:825188367636627456>" + Math.round(priceOfLtc / priceOfDoge) },
-              { name: "Stocks", value: "<:tesla:825390575523856395> Tesla - " + '<:dogecoin:825188367636627456> ' + teslaConverted + '\n' + ":rocket: SpaceX - " + '<:dogecoin:825188367636627456> ' + 'N/A' + '\n' + "<:roblox:825394994655395840> Roblox - " + '<:dogecoin:825188367636627456> ' + robloxConverted + '\n' + "<:theBoringCompany:825390794922786876> Boring Company - " + '<:dogecoin:825188367636627456> ' + "N/A" + '\n' + "<:elon:825390986984161330> Elon - " + '<:dogecoin:825188367636627456> ' + elonStock + '\n' + "<:blackberry:828454560389529651> Blackberry - <:dogecoin:825188367636627456>" + blackberryConverted },
+              { name: 'Currencies', value: `${emojis.doge} Dogecoin - ` + `${emojis.dogecoin} ` + "1" + '\n' + ":dollar: USD - " + `${emojis.dogecoin} ` + Math.round(1 / priceOfDoge) + '\n' + `${emojis.bitcoin} Bitcoin - ` + `${emojis.dogecoin} ` + Math.round(priceOfBtc / priceOfDoge) + '\n' + `${emojis.ethereum} Ethereum - ` + `${emojis.dogecoin} ` + Math.round(priceOfEth / priceOfDoge) + '\n' + `${emojis.litecoin} Litecoin - ${emojis.dogecoin}` + Math.round(priceOfLtc / priceOfDoge) },
+              { name: "Stocks", value: `${emojis.tesla} Tesla - ` + `${emojis.dogecoin} ` + teslaConverted + '\n' + ":rocket: SpaceX - " + `${emojis.dogecoin} ` + 'N/A' + '\n' + `${emojis.roblox} Roblox - ` + `${emojis.dogecoin} ` + robloxConverted + '\n' + `${emojis.theboringcompany} Boring Company - ` + `${emojis.dogecoin} ` + "N/A" + '\n' + `${emojis.elon} Elon - ` + `${emojis.dogecoin} ` + elonStock + '\n' + `${emojis.blackberry} Blackberry - ${emojis.dogecoin}` + blackberryConverted },
               { name: "Additional Info", value: '-For more information about each stock just use the ``el help stock [STOCK NAME]`` command' }
             )
           message.channel.send(embed);
@@ -1116,15 +1134,16 @@ mongoclient.connect(async function (err, mongoclient) {
 
           let embed = new Discord.MessageEmbed()
             .setColor('#9098a6')
-            .setTitle(message.member.user.tag + "'s" + " inventory").addFields(
+            .setTitle("Shop").addFields(
 
-              { name: ':rocket: Falcon 9 - ' + '<:dogecoin:825188367636627456> ' + falcon9price, value: "Board the Falcon 9 for a chance to earn Doge...or die trying" },
+              { name: ':rocket: Falcon 9 - ' + `${emojis.dogecoin} ` + falcon9price, value: "Board the Falcon 9 for a chance to earn Doge...or die trying" },
 
-              { name: ':fire: Flamethrower - ' + '<:dogecoin:825188367636627456> ' + flamethrowerprice, value: "Use the flamethrower to *try* and kill someone, but beware; you might die too" },
-              { name: '<:gold:825217757918396446> Gold - ' + '<:dogecoin:825188367636627456> ' + goldprice, value: "Money can't buy you happiness, but it can save your life" }, { name: '<:twitter:825218272005062696> Twitter Followers - ' + '<:dogecoin:825188367636627456> ' + twitterprice, value: "Get a pay raise; just don't get cancelled by your followers" },
-              { name: ':house_with_garden: House - ' + '<:dogecoin:825188367636627456> ' + houseprice, value: "Rent out your house to Elon so he can have parties in it" },
-              { name: ':blue_car: Tesla - ' + '<:dogecoin:825188367636627456> ' + teslaprice, value: "Use you Tesla as an Uber driver and earn some extra Dogecoin" },
-              { name: ':coin: NFT - ' + '<:dogecoin:825188367636627456> ' + nftprice, value: "A useless collectible to show off to your friends if you're rich (just like a real NFT)" }, { name: 'Additional Info', value: "-To find out more about each item say ``el help [ITEM NAME]``" + '\n' + "-Say ``el buy [ITEM NAME] [AMOUNT]`` to buy the item" + '\n' + "-Say ``el use [ITEM NAME]`` to active the item" }
+              { name: ':fire: Flamethrower - ' + `${emojis.dogecoin} ` + flamethrowerprice, value: "Use the flamethrower to *try* and kill someone, but beware; you might die too" },
+              { name: `${emojis.gold} Gold - ` + `${emojis.dogecoin} ` + goldprice, value: "Money can't buy you happiness, but it can save your life" },
+              { name: `${emojis.twitter} Twitter Followers - ` + `${emojis.dogecoin} ` + twitterprice, value: "Get a pay raise; just don't get cancelled by your followers" },
+              { name: ':house_with_garden: House - ' + `${emojis.dogecoin} ` + houseprice, value: "Rent out your house to Elon so he can have parties in it" },
+              { name: ':blue_car: Tesla - ' + `${emojis.dogecoin} ` + teslaprice, value: "Use you Tesla as an Uber driver and earn some extra Dogecoin" },
+              { name: ':coin: NFT - ' + `${emojis.dogecoin} ` + nftprice, value: "A useless collectible to show off to your friends if you're rich (just like a real NFT)" }, { name: 'Additional Info', value: "-To find out more about each item say ``el help [ITEM NAME]``" + '\n' + "-Say ``el buy [ITEM NAME] [AMOUNT]`` to buy the item" + '\n' + "-Say ``el use [ITEM NAME]`` to active the item" }
 
             )
           message.channel.send(embed);
@@ -1292,7 +1311,7 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Tesla Stock Information").addFields(
-                { name: 'Price', value: '<:dogecoin:825188367636627456> ' + teslaConverted },
+                { name: 'Price', value: `${emojis.dogecoin} ` + teslaConverted },
                 { name: 'Description', value: "Price is derived from the [real Tesla Stocks](https://finance.yahoo.com/quote/TSLA/) and then converted to Dogecoin. Invest in the stock and sell it whenever you want." }
               )
             message.channel.send(embed);
@@ -1313,7 +1332,7 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Roblox Stock Information").addFields(
-                { name: 'Price', value: '<:dogecoin:825188367636627456> ' + robloxConverted },
+                { name: 'Price', value: `${emojis.dogecoin} ` + robloxConverted },
                 { name: 'Description', value: "Price is derived from the [real Roblox stocks](https://finance.yahoo.com/quote/RBLX/) and then converted to Dogecoin. Invest in the stock and sell it whenever you want." }
               )
             message.channel.send(embed);
@@ -1332,7 +1351,7 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Roblox Stock Information").addFields(
-                { name: 'Price', value: '<:dogecoin:825188367636627456> ' + elonStock },
+                { name: 'Price', value: `${emojis.dogecoin} ` + elonStock },
                 { name: 'Description', value: "Price is derived from a random number generator. It literally fluctuates 24/7" }
               )
             message.channel.send(embed);
@@ -1347,8 +1366,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Gold Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + goldprice },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(goldprice * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + goldprice },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(goldprice * .8) },
                 { name: 'Description', value: "Buy some gold and whenever you die your life will be spared (by bribing the asassin? idk games never make sense) but you will lose the gold." }
               )
             message.channel.send(embed);
@@ -1357,8 +1376,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Falcon 9 Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + falcon9price },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(falcon9price * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + falcon9price },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(falcon9price * .8) },
                 { name: 'Description', value: "When you use this item you have a 40% chance of earning [69,420](https://twitter.com/elonmusk/status/1316454051693895680?lang=en) Dogecoins, a 30% chance of the rocket crashing and you dying, and a 30% chance that nothing happens." }
               )
             message.channel.send(embed);
@@ -1369,8 +1388,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("House Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + houseprice },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(houseprice * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + houseprice },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(houseprice * .8) },
                 { name: 'Description', value: "Elon needs places to host his parties, which is why he's renting our house. Use the ``el rent`` command to rent out your house to Elon and earn Doge." }
               )
             message.channel.send(embed);
@@ -1382,7 +1401,7 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("NFT Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + nftprice },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + nftprice },
                 { name: 'Sell', value: "NFT's cannot be sold, but if you wish to trade them with your friends you can use the gift command." },
                 { name: 'Description', value: "If you ever want to show off your wealth to your friends, NFT's are the way to go." }
               )
@@ -1392,8 +1411,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Tesla Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + teslaprice },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(teslaprice * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + teslaprice },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(teslaprice * .8) },
                 { name: 'Description', value: "You can use your Tesla as an Uber driver. Every minute you can use the ``el uber`` command to uber someone and earn some Doge." }
               )
             message.channel.send(embed);
@@ -1403,8 +1422,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Twitter Followers Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + twitterprice },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(twitterprice * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + twitterprice },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(twitterprice * .8) },
                 { name: 'Description', value: "Gain 1000 new Twitter followers by buying this, which will give you a 5% raise with your job. But beware, the more followers you have, the higher chance you have of getting cancelled/dying." }
               )
             message.channel.send(embed);
@@ -1415,8 +1434,8 @@ mongoclient.connect(async function (err, mongoclient) {
             let embed = new Discord.MessageEmbed()
               .setColor('#9098a6')
               .setTitle("Flamethrower Information").addFields(
-                { name: 'Buy', value: '<:dogecoin:825188367636627456> ' + flamethrowerprice },
-                { name: 'Sell', value: '<:dogecoin:825188367636627456> ' + Math.round(flamethrowerprice * .8) },
+                { name: 'Buy', value: `${emojis.dogecoin} ` + flamethrowerprice },
+                { name: 'Sell', value: `${emojis.dogecoin} ` + Math.round(flamethrowerprice * .8) },
                 { name: 'Description', value: "Use the Boring Company Flamethrower to attack someone. There's a 55% chance your target will die, and there's a 45% chance you will die." }
               )
             message.channel.send(embed);
@@ -2008,7 +2027,7 @@ mongoclient.connect(async function (err, mongoclient) {
             .setTitle("Hobbies").addFields(
               { name: ':briefcase: Lawyer - 50%', value: 'Helps you sue people' },
               { name: ':computer: Hacker - 33%', value: 'Gives you more money from laundering' },
-              { name: "<:elon:825390986984161330> Elon's Child - 1%", value: 'Gives you 200 Dogecoins for every transaction' },
+              { name: `${emojis.elon} Elon's Child - 1%`, value: 'Gives you 200 Dogecoins for every transaction' },
               { name: "Additional Info", value: '-Each % is the chance of you getting the hobby when you choose it' + '\n' + '-Find out more about the hobbies using ``el help [HOBBY NAME]``' })
           message.channel.send(embed);
         }
@@ -2029,7 +2048,7 @@ mongoclient.connect(async function (err, mongoclient) {
               .setTitle("Hobbies").addFields(
                 { name: ':briefcase: 1. Lawyer - 50%', value: 'Helps you sue people' },
                 { name: ':computer: 2. Hacker - 33%', value: 'Gives you more money from laundering' },
-                { name: "<:elon:825390986984161330> 3. Elon's Child - 1%", value: 'Gives you 200 Dogecoins for every transaction' },
+                { name: `${emojis.elon} 3. Elon's Child - 1%`, value: 'Gives you 200 Dogecoins for every transaction' },
                 { name: "Additional Info", value: '-Each % is the chance of you getting the hobby when you choose it \n' + '-Get a hobby using ``el get hobby``' + '\n' + '-Find out more about the hobbies using ``el help [HOBBY NAME]``' })
             message.channel.send(embed);
 
