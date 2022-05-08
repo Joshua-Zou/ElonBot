@@ -1,9 +1,9 @@
 //const CoinGecko = require('coingecko-api');
 //const CoinGeckoClient = new CoinGecko();
 var yahooStockPrices = require("yahoo-stock-prices")
-var allStock = {};
 const fetch = require("node-fetch")
 const secrets = require("./secrets.json")
+const priceService = require("./priceupdater.js")
 var falcon9price = 30000
 var flamethrowerprice = 10000
 var nftprice = 100000
@@ -21,6 +21,7 @@ const uri = secrets.mongodb;
 const mongoclient = new MongoClient(uri, { poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true, useUnifiedTopology: true });
 var commandPerSecond = 0;
 var commandPerMinute = [];
+
 
 const emojis = {
   "dogecoin": "<:dogecoin:972591861065711646>",
@@ -40,7 +41,7 @@ const emojis = {
 
 
 mongoclient.connect(async function (err, mongoclient) {
-
+  await priceService();
   client.login(secrets.discordBotToken);
 
   var cooldowns = {}
@@ -333,8 +334,7 @@ mongoclient.connect(async function (err, mongoclient) {
             balance.currency.ltc = 0;
           }
 
-          let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-          prices = await prices.json()
+          let prices = global.cryptoPrices
           let dogePrice = Number(prices.dogecoin.usd)
           let ethPrice = Number(prices.ethereum.usd)
           let btcPrice = Number(prices.bitcoin.usd)
@@ -849,8 +849,7 @@ mongoclient.connect(async function (err, mongoclient) {
               let amountToBuy = await func1(thenum);
               async function func1(thenum) {
                 var amountToBuy = 0;
-                let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-                prices = await prices.json()
+                let prices = global.cryptoPrices
                 let dogePrice = Number(prices.dogecoin.usd)
                 let ethPrice = Number(prices.ethereum.usd)
                 let btcPrice = Number(prices.bitcoin.usd)
@@ -863,14 +862,11 @@ mongoclient.connect(async function (err, mongoclient) {
                 } else if (coin === "eth") {
                   amountToBuy = ethPrice * Number(thenum);
                 } else if (coin === "tesla") {
-                  let data = await yahooStockPrices.getCurrentData("TSLA");
-                  amountToBuy = data.price * Number(thenum)
+                  amountToBuy =  global.stockPrices.tsla * Number(thenum)
                 } else if (coin === "game") {
-                  let data = await yahooStockPrices.getCurrentData("GME");
-                  amountToBuy = data.price * Number(thenum)
+                  amountToBuy =  global.stockPrices.gme * Number(thenum)
                 } else if (coin === "roblox") {
-                  let data = await yahooStockPrices.getCurrentData("RBLX");
-                  amountToBuy = data.price * Number(thenum)
+                  amountToBuy =  global.stockPrices.rblx * Number(thenum)
                 } else if (coin === "ingame") {
                   amountToBuy = Math.floor(Math.random() * 300) * Number(thenum);
                 } else if (coin === "usd") {
@@ -878,8 +874,7 @@ mongoclient.connect(async function (err, mongoclient) {
                 } else if (coin === "ltc") {
                   amountToBuy = ltcPrice * Number(thenum)
                 } else if (coin === "bb") {
-                  let data = await yahooStockPrices.getCurrentData("BB");
-                  amountToBuy = data.price * Number(thenum)
+                  amountToBuy =  global.stockPrices.bb * Number(thenum)
                 }
                 return amountToBuy;
               }
@@ -888,8 +883,7 @@ mongoclient.connect(async function (err, mongoclient) {
               // totalAmount is the amount that they are going to spend in their requested currency
               let totalAmount = await func2(amountToBuy);
               async function func2(amountToBuy) {
-                let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-                prices = await prices.json()
+                let prices = global.cryptoPrices
                 let dogePrice = Number(prices.dogecoin.usd)
                 let ethPrice = Number(prices.ethereum.usd)
                 let btcPrice = Number(prices.bitcoin.usd)
@@ -905,21 +899,17 @@ mongoclient.connect(async function (err, mongoclient) {
                 } else if (x.toString() === "4") {
                   totalAmount = amountToBuy / ethPrice
                 } else if (x.toString() === "5") {
-                  let temp1 = await yahooStockPrices.getCurrentData("TSLA");
-                  totalAmount = amountToBuy / temp1.price
+                  totalAmount = amountToBuy /  global.stockPrices.tsla
                 } else if (x.toString() === "7") {
-                  let temp1 = await yahooStockPrices.getCurrentData("RBLX");
-                  totalAmount = amountToBuy / temp1.price
+                  totalAmount = amountToBuy /  global.stockPrices.rblx
                 } else if (x.toString() === "9") {
-                  let temp1 = await yahooStockPrices.getCurrentData("GME");
-                  totalAmount = amountToBuy / temp1.price
+                  totalAmount = amountToBuy /  global.stockPrices.gme
                 } else if (x.toString() === "10") {
                   totalAmount = amountToBuy / Math.floor(Math.random() * 300)
                 } else if (x.toString() === "11") {
                   totalAmount = amountToBuy / ltcPrice
                 } else if (x.toString() === "12") {
-                  let data = await yahooStockPrices.getCurrentData("BB");
-                  totalAmount = amountToBuy / data.price
+                  totalAmount = amountToBuy /  global.stockPrices.bb
                 }
                 return totalAmount;
               }
@@ -1073,20 +1063,14 @@ mongoclient.connect(async function (err, mongoclient) {
           }
           let user = balance;
 
-          let temp1 = await yahooStockPrices.getCurrentData("TSLA");
-          let tsla = Number(temp1.price)
-          temp1 = await yahooStockPrices.getCurrentData("RBLX");
-          let rblx = Number(temp1.price)
-          temp1 = await yahooStockPrices.getCurrentData("GME");
-          let gme = Number(temp1.price)
-
-          temp1 = await yahooStockPrices.getCurrentData("BB");
-          let bb = Number(temp1.price)
+          let tsla = global.stockPrices.tsla;
+          let rblx = global.stockPrices.rblx;
+          let gme = global.stockPrices.gme;
+          let bb = global.stockPrices.bb;
 
           let elonStock = Math.floor(Math.random() * 300);
 
-          let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-          prices = await prices.json()
+          let prices = global.cryptoPrices;
           let dogePrice = Number(prices.dogecoin.usd)
 
           tsla = tsla / dogePrice;
@@ -1103,20 +1087,19 @@ mongoclient.connect(async function (err, mongoclient) {
           message.channel.send(embed);
         }
         if (message.content.toLowerCase() === prefix + 'stock' || message.content.toLowerCase() === prefix + 'stocks' || message.content.toLowerCase() === prefix + "stock list") {
-          let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Clitecoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-          prices = await prices.json()
+          let prices = global.cryptoPrices
           let priceOfDoge = Number(prices.dogecoin.usd)
           let priceOfEth = Number(prices.ethereum.usd)
           let priceOfBtc = Number(prices.bitcoin.usd)
           let priceOfLtc = Number(prices.litecoin.usd)
 
-          let totalAmount = allStock.tsla.price
+          let totalAmount = global.stockPrices.tsla;
           let teslaConverted = Math.round(totalAmount / priceOfDoge)
 
-          let blackberrytotalAmount = allStock.bb.price
+          let blackberrytotalAmount = global.stockPrices.bb
           let blackberryConverted = Math.round(blackberrytotalAmount / priceOfDoge)
 
-          let robloxtotalAmount = allStock.rblx.price
+          let robloxtotalAmount = global.stockPrices.rblx;
           let robloxConverted = Math.round(robloxtotalAmount / priceOfDoge)
           let elonStock = Math.floor(Math.random() * 300);
 
@@ -1298,14 +1281,12 @@ mongoclient.connect(async function (err, mongoclient) {
             message.channel.send(embed);
           }
           if (message.content.toLowerCase() === prefix + "help stock tesla" || message.content.toLowerCase() === prefix + "help stock teslas" || message.content.toLowerCase() === prefix + "help stocks tesla" || message.content.toLowerCase() === prefix + "help stocks teslas") {
-            let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-            prices = await prices.json()
+            let prices = global.cryptoPrices;
             let priceOfDoge = Number(prices.dogecoin.usd)
 
 
 
-            let stockPrice = await yahooStockPrices.getCurrentData("TSLA");
-            let totalAmount = stockPrice.price
+            let totalAmount =  global.stockPrices.tsla
             let teslaConverted = Math.round(totalAmount / priceOfDoge)
 
             let embed = new Discord.MessageEmbed()
@@ -1318,15 +1299,13 @@ mongoclient.connect(async function (err, mongoclient) {
           }
 
           if (message.content.toLowerCase() === prefix + "help stock roblox" || message.content.toLowerCase() === prefix + "help stocks roblox") {
-            let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-            prices = await prices.json()
+            let prices = global.cryptoPrices;
             let priceOfDoge = Number(prices.dogecoin.usd)
 
 
 
 
-            let robloxstockPrice = await yahooStockPrices.getCurrentData("RBLX");
-            let robloxtotalAmount = robloxstockPrice.price
+            let robloxtotalAmount = global.stockPrices.rblx
             let robloxConverted = Math.round(robloxtotalAmount / priceOfDoge)
 
             let embed = new Discord.MessageEmbed()
@@ -1339,12 +1318,6 @@ mongoclient.connect(async function (err, mongoclient) {
           }
 
           if (message.content.toLowerCase() === prefix + "help stock elon" || message.content.toLowerCase() === prefix + "help stocks elon") {
-            let prices = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum%2Cdogecoin&vs_currencies=usd")
-            prices = await prices.json()
-            let priceOfDoge = Number(prices.dogecoin.usd)
-
-
-
             let elonStock = Math.floor(Math.random() * 300);
 
 
@@ -1992,8 +1965,7 @@ mongoclient.connect(async function (err, mongoclient) {
           async function getCoin() {
             let coin = message.content.toLowerCase().slice(5 + prefixlength);
 
-            let data = await fetch("https://api.coingecko.com/api/v3/coins/" + coin + "?localization=true");
-            data = await data.json()
+            let data = global.cryptoPrices
             if (!data.id) {
               message.channel.send("Could not find coin with the given name");
               return;
@@ -2443,7 +2415,7 @@ mongoclient.connect(async function (err, mongoclient) {
           return ret;
         }
       } catch (e) {
-        console.error(e.warn);
+        console.error(e);
       } finally {
       }
     }
@@ -2471,7 +2443,7 @@ mongoclient.connect(async function (err, mongoclient) {
       let x = Number(client.guilds.cache.size);
       let accounts = await mongoclient.db("elonbot").collection("everything").find().count();
       let numCmdPerMin = 0;
-      for (let p = 0; p<commandPerMinute.length; p++) {
+      for (let p = 0; p < commandPerMinute.length; p++) {
         numCmdPerMin += commandPerMinute[p]
       }
       console.log("guilds: ", x);
@@ -2486,28 +2458,15 @@ mongoclient.connect(async function (err, mongoclient) {
       await sleep(100000)
     }
   }
-async function calculateMsgPerMinute(){
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-  while(true){
-    commandPerMinute.push(commandPerSecond);
-    commandPerSecond = 0;
-    if (commandPerMinute.length === 60) commandPerMinute.shift()
-    await sleep(1000);
-  }
-}
-  while (true) {
+  async function calculateMsgPerMinute() {
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
-    try {
-      allStock.tsla = await yahooStockPrices.getCurrentData("TSLA");
-      allStock.bb = await yahooStockPrices.getCurrentData("BB");
-      allStock.rblx = await yahooStockPrices.getCurrentData("RBLX");
-      await sleep(10000)
-    } catch (err) {
-      continue;
+    while (true) {
+      commandPerMinute.push(commandPerSecond);
+      commandPerSecond = 0;
+      if (commandPerMinute.length === 60) commandPerMinute.shift()
+      await sleep(1000);
     }
   }
   return mongoclient;
