@@ -18,7 +18,7 @@ const Discord = discord;
 const client = new discord.Client({ disableMentions: 'everyone' });
 const { MongoClient } = require('mongodb')
 const uri = secrets.mongodb;
-const mongoclient = new MongoClient(uri, { poolSize: 10, bufferMaxEntries: 0, useNewUrlParser: true, useUnifiedTopology: true });
+const mongoclient = new MongoClient(uri, {useUnifiedTopology: true });
 var commandPerSecond = 0;
 var commandPerMinute = [];
 
@@ -2471,4 +2471,3 @@ mongoclient.connect(async function (err, mongoclient) {
   }
   return mongoclient;
 });
-mongoclient.close();
