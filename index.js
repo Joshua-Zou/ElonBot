@@ -1,6 +1,5 @@
 //const CoinGecko = require('coingecko-api');
 //const CoinGeckoClient = new CoinGecko();
-var yahooStockPrices = require("yahoo-stock-prices")
 const fetch = require("node-fetch")
 const secrets = require("./secrets.json")
 const priceService = require("./priceupdater.js")
